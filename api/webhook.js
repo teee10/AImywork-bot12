@@ -17,16 +17,10 @@ const SYSTEM_PROMPT = `あなたは「マイワーク AIスクール」の生徒
 - Googleドキュメントの内容が共有されたら、その内容をもとに具体的にフィードバックする
 - 課題のフィードバックは励ましを忘れずに、改善点も具体的に伝える
 - わからないことは「講師に確認します」と正直に伝える
-- 返答は日本語で、カジュアルすぎず堅すぎないトーンで
-
-## よくある質問
-- ツールの使い方がわからない → 公式チュートリアルを案内し、具体的なステップを説明
-- 課題提出の方法 → GoogleドキュメントにまとめてリンクをLINEで送るよう案内
-- 次のステップが知りたい → カリキュラムの順序を案内`;
+- 返答は日本語で、カジュアルすぎず堅すぎないトーンで`;
 
 const GOOGLE_DOC_REGEX = /https:\/\/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/;
 
-// LINE署名検証
 function verifySignature(body, signature) {
   const hash = crypto
     .createHmac("sha256", LINE_CHANNEL_SECRET)
@@ -35,7 +29,6 @@ function verifySignature(body, signature) {
   return hash === signature;
 }
 
-// Google Docsのテキスト取得
 async function fetchGoogleDoc(url) {
   const match = url.match(GOOGLE_DOC_REGEX);
   if (!match) return null;
@@ -50,17 +43,13 @@ async function fetchGoogleDoc(url) {
   }
 }
 
-// Claude APIに問い合わせ
 async function askClaude(userText) {
-  // Google DocsのURLがあれば内容を取得して追加
   let content = userText;
   const docMatch = userText.match(GOOGLE_DOC_REGEX);
   if (docMatch) {
     const docContent = await fetchGoogleDoc(docMatch[0]);
     if (docContent) {
       content = `${userText}\n\n【Googleドキュメントの内容】\n${docContent.slice(0, 4000)}`;
-    } else {
-      content = `${userText}\n\n※ Googleドキュメントの読み取りに失敗しました。「リンクを知っている全員が閲覧可能」に設定されているか確認してください。`;
     }
   }
 
@@ -80,10 +69,14 @@ async function askClaude(userText) {
   });
 
   const data = await res.json();
-  return data.content?.[0]?.text || "申し訳ありません、回答を生成できませんでした。";
+  
+  if (!res.ok || data.error) {
+    throw new Error(`API Error ${res.status}: ${JSON.stringify(data.error)}`);
+  }
+
+  return data.content?.[0]?.text || "返答を取得できませんでした。";
 }
 
-// LINEに返信
 async function replyToLine(replyToken, text) {
   await fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST",
@@ -98,13 +91,11 @@ async function replyToLine(replyToken, text) {
   });
 }
 
-// Vercel Serverless Function のエントリーポイント
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(200).json({ status: "ok" });
   }
 
-  // 署名検証
   const signature = req.headers["x-line-signature"];
   const rawBody = JSON.stringify(req.body);
   if (!verifySignature(rawBody, signature)) {
@@ -124,7 +115,7 @@ export default async function handler(req, res) {
       await replyToLine(replyToken, reply);
     } catch (err) {
       console.error("Error:", err);
-      await replyToLine(replyToken, "エラーが発生しました。しばらくしてからもう一度お試しください。");
+      await replyToLine(replyToken, `エラー詳細: ${err.message}`);
     }
   }
 
