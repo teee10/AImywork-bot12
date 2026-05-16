@@ -8,18 +8,27 @@ const FEEDBACK_DOC_ID = "10ODxEZ3L7E3qMor2RN3E1wS7s1t00S7ICeNl6WKmjZA";
 const GOOGLE_DOC_REGEX = /https:\/\/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/;
 
 let feedbackExamplesCache = null;
+let cacheLoadedAt = null;
+const CACHE_TTL = 1000 * 60 * 60; // 1時間キャッシュ
 
-async function fetchFeedbackExamples() {
-  if (feedbackExamplesCache) return feedbackExamplesCache;
+// 起動時に非同期で先読み（タイムアウトしても処理は続行）
+async function loadFeedbackExamples() {
+  if (feedbackExamplesCache && cacheLoadedAt && Date.now() - cacheLoadedAt < CACHE_TTL) {
+    return feedbackExamplesCache;
+  }
   try {
     const url = `https://docs.google.com/document/d/${FEEDBACK_DOC_ID}/export?format=txt`;
-    const res = await fetch(url);
-    if (!res.ok) return "";
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5秒でタイムアウト
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return feedbackExamplesCache || "";
     const text = await res.text();
-    feedbackExamplesCache = text.slice(0, 6000);
+    feedbackExamplesCache = text.slice(0, 8000);
+    cacheLoadedAt = Date.now();
     return feedbackExamplesCache;
   } catch {
-    return "";
+    return feedbackExamplesCache || ""; // 失敗してもキャッシュがあれば使う
   }
 }
 
@@ -28,40 +37,23 @@ function buildSystemPrompt(feedbackExamples) {
 講師の代わりに生徒からの質問への回答と、課題への詳細なフィードバックを行います。
 
 ## スクールについて
-- コース内容：AIライティング、画像生成AI、動画生成AI、プロンプトエンジニアリング
-- 使用ツール：Runway Gen-3、Pika Labs、Kling AI、Sora、ChatGPT、Midjourneyなど
-- 受講形式：オンライン、テキストベースのカリキュラム
+コース内容はAIライティング・画像生成AI・動画生成AI・プロンプトエンジニアリングです。
+使用ツールはRunway Gen-3・Pika Labs・Kling AI・Sora・ChatGPT・Midjourneyなどです。
 
 ## 通常質問への対応
-- 生徒が課題や教材について質問したら、わかりやすく丁寧に答える
-- わからないことは「講師に確認します」と正直に伝える
-- 返答は日本語で、カジュアルすぎず堅すぎないトーンで
-- スクールと関係のない話題には「スクールのサポートボットなので、課題やツールに関する質問をどうぞ」と返す
+生徒が課題や教材について質問したら、わかりやすく丁寧に答えてください。
+わからないことは「講師に確認します」と正直に伝えてください。
+返答は日本語で、カジュアルすぎず堅すぎないトーンで。
+スクールと関係のない話題には「スクールのサポートボットなので、課題やツールに関する質問をどうぞ」と返してください。
 
 ## 課題フィードバックのルール（最重要）
 
-### 文体ルール（絶対に守ること）
-- 箇条書き（・や-）は一切使わない
-- 太字（**）は一切使わない
-- 全て文章（散文）で書く
-- 良かった点は具体的に、何がなぜ良いのかまで掘り下げて説明する
-- 改善点も具体的に、どう直せばよいかまで説明する
-- 初心者を傷つけない励ましのトーンを維持する
-- どのAIツールを使ったか特定・推測するコメントは一切しない
-- 点数は高く出しすぎない（平均的な課題は75〜83点程度）
-- 一度フィードバックした課題が再送されても同じ内容・点数で返す（課題内容が変わっていれば再フィードバックする）
+文体ルールとして、箇条書きと太字は一切使わず全て文章で書くこと。良かった点は何がなぜ良いのかまで掘り下げること。改善点はどう直せばよいかまで説明すること。初心者を傷つけない励ましのトーンを維持すること。どのAIツールを使ったか特定・推測するコメントは一切しないこと。点数は高く出しすぎないこと（平均的な課題は75〜83点程度）。一度フィードバックした課題が再送されても同じ内容・点数で返すこと（課題内容が変わっていれば再フィードバックする）。
 
-### フォーマット
-冒頭は必ず「フィードバックします！」から始める。
-総合点を「総合点：〇〇点」の形式で出す（複数作品は各作品に「総合評価：〇〇点」）。
-その後、課題タイプを自動判定して該当する全観点から超詳細にフィードバックする。
-全て文章（散文）で書き、箇条書きと太字は一切使わない。
-最後は全体総括と励ましで締める。
+フォーマットとして、冒頭は必ず「フィードバックします！」から始めること。総合点を「総合点：〇〇点」の形式で出すこと（複数作品は各作品に「総合評価：〇〇点」）。課題タイプを自動判定して該当する全観点から超詳細にフィードバックすること。全て文章で書き箇条書きと太字は一切使わないこと。最後は全体総括と励ましで締めること。
 
-## フィードバック文体の参考例
-以下は講師が実際に書いたフィードバックの例です。この文体・トーン・詳しさを参考にしてください。
-
-${feedbackExamples}`;
+## フィードバック文体・知識の参考
+${feedbackExamples ? feedbackExamples : "（参考例文は現在読み込み中です）"}`;
 }
 
 async function fetchGoogleDoc(url) {
@@ -69,9 +61,12 @@ async function fetchGoogleDoc(url) {
   if (!match) return null;
   const docId = match[1];
   if (docId === FEEDBACK_DOC_ID) return null;
-  const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
   try {
-    const res = await fetch(exportUrl);
+    const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(exportUrl, { signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) return null;
     return await res.text();
   } catch {
@@ -79,76 +74,18 @@ async function fetchGoogleDoc(url) {
   }
 }
 
-// LINE画像をBase64で取得
 async function fetchLineImage(messageId) {
   const res = await fetch(`https://api-data.line.me/v2/bot/message/${messageId}/content`, {
     headers: { Authorization: `Bearer ${LINE_ACCESS_TOKEN}` },
   });
   if (!res.ok) return null;
   const buffer = await res.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString("base64");
-  return base64;
+  return Buffer.from(buffer).toString("base64");
 }
 
-// テキストのみでClaudeに問い合わせ
-async function askClaudeText(userText) {
-  const feedbackExamples = await fetchFeedbackExamples();
+async function askClaude(userContent, isImage = false) {
+  const feedbackExamples = await loadFeedbackExamples();
   const systemPrompt = buildSystemPrompt(feedbackExamples);
-
-  let content = userText;
-  const docMatch = userText.match(GOOGLE_DOC_REGEX);
-  if (docMatch) {
-    const docContent = await fetchGoogleDoc(docMatch[0]);
-    if (docContent) {
-      content = `${userText}\n\n【Googleドキュメントの内容】\n${docContent.slice(0, 4000)}`;
-    } else if (docMatch[1] !== FEEDBACK_DOC_ID) {
-      content = `${userText}\n\n※ Googleドキュメントの読み取りに失敗しました。「リンクを知っている全員が閲覧可能」に設定されているか確認してください。`;
-    }
-  }
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-5",
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: [{ role: "user", content }],
-    }),
-  });
-
-  const data = await res.json();
-  if (!res.ok || data.error) {
-    throw new Error(`API Error ${res.status}: ${JSON.stringify(data.error)}`);
-  }
-  return data.content?.[0]?.text || "返答を取得できませんでした。";
-}
-
-// 画像付きでClaudeに問い合わせ
-async function askClaudeImage(base64Image, caption) {
-  const feedbackExamples = await fetchFeedbackExamples();
-  const systemPrompt = buildSystemPrompt(feedbackExamples);
-
-  const userContent = [
-    {
-      type: "image",
-      source: {
-        type: "base64",
-        media_type: "image/jpeg",
-        data: base64Image,
-      },
-    },
-    {
-      type: "text",
-      text: caption
-        ? `課題画像が送られました。キャプション：「${caption}」\nこの画像に対して超詳細なフィードバックをしてください。`
-        : "課題画像が送られました。この画像（画像生成AI・バナー・インスタグラム投稿など）に対して超詳細なフィードバックをしてください。",
-    },
-  ];
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -220,17 +157,32 @@ export default async function handler(req, res) {
 
     try {
       if (msg.type === "text") {
-        const reply = await askClaudeText(msg.text);
+        let content = msg.text;
+        const docMatch = msg.text.match(GOOGLE_DOC_REGEX);
+        if (docMatch) {
+          const docContent = await fetchGoogleDoc(docMatch[0]);
+          if (docContent) {
+            content = `${msg.text}\n\n【Googleドキュメントの内容】\n${docContent.slice(0, 4000)}`;
+          } else {
+            content = `${msg.text}\n\n※ Googleドキュメントの読み取りに失敗しました。「リンクを知っている全員が閲覧可能」に設定されているか確認してください。`;
+          }
+        }
+        const reply = await askClaude(content);
         await replyToLine(replyToken, reply);
+
       } else if (msg.type === "image") {
         const base64Image = await fetchLineImage(msg.id);
         if (!base64Image) {
           await replyToLine(replyToken, "画像の取得に失敗しました。もう一度送ってみてください。");
           continue;
         }
-        const caption = msg.contentMetadata?.caption || null;
-        const reply = await askClaudeImage(base64Image, caption);
+        const userContent = [
+          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64Image } },
+          { type: "text", text: "課題画像が送られました。画像生成AI・バナー・インスタグラム投稿などの課題として超詳細にフィードバックしてください。" },
+        ];
+        const reply = await askClaude(userContent, true);
         await replyToLine(replyToken, reply);
+
       } else {
         await replyToLine(replyToken, "テキストまたは画像を送ってください。課題のフィードバックや質問に対応します！");
       }
