@@ -9,14 +9,25 @@ const FEEDBACK_BOT_URL = process.env.FEEDBACK_BOT_URL;
 const GOOGLE_DOC_REGEX = /https:\/\/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/;
 const SUBMISSION_KEYWORDS = /課題|提出|添削|フィードバック|講評|採点|評価して|見てください|見てもらえ/;
 
-const MANUAL_PATH = new URL("../manuals/week1_manual.pdf", import.meta.url);
-let cachedManualBase64 = null;
+const MANUALS_DIR = new URL("../manuals/", import.meta.url);
+let cachedManuals = null;
 
-function getManualBase64() {
-  if (!cachedManualBase64) {
-    cachedManualBase64 = fs.readFileSync(MANUAL_PATH).toString("base64");
+function getManuals() {
+  if (!cachedManuals) {
+    const files = fs
+      .readdirSync(MANUALS_DIR)
+      .filter((name) => name.toLowerCase().endsWith(".pdf"))
+      .sort();
+    cachedManuals = files.map((name) => ({
+      type: "document",
+      source: {
+        type: "base64",
+        media_type: "application/pdf",
+        data: fs.readFileSync(new URL(name, MANUALS_DIR)).toString("base64"),
+      },
+    }));
   }
-  return cachedManualBase64;
+  return cachedManuals;
 }
 
 const SYSTEM_PROMPT = `あなたは「マイワーク AIスクール」の質問対応専用AIアシスタントです。講師の代わりに生徒からの質問にのみ回答します。課題の採点やフィードバックは一切行いません。
@@ -41,13 +52,7 @@ function looksLikeSubmission(msg) {
 }
 
 async function askClaude(userQuestion) {
-  const userContent = [
-    {
-      type: "document",
-      source: { type: "base64", media_type: "application/pdf", data: getManualBase64() },
-    },
-    { type: "text", text: userQuestion },
-  ];
+  const userContent = [...getManuals(), { type: "text", text: userQuestion }];
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
