@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import fs from "fs";
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 const LINE_QA_CHANNEL_SECRET = process.env.LINE_QA_CHANNEL_SECRET;
 const LINE_QA_ACCESS_TOKEN = process.env.LINE_QA_ACCESS_TOKEN;
@@ -22,8 +22,7 @@ async function getKnowledgeBase() {
     const texts = [];
     for (const name of files) {
       const data = fs.readFileSync(new URL(name, MANUALS_DIR));
-      const parser = new PDFParse({ data });
-      const result = await parser.getText();
+      const result = await pdfParse(data);
       texts.push(result.text);
     }
     cachedKnowledgeBase = texts.join("\n\n---\n\n");
