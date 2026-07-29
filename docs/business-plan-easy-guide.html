@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>中学生にもわかる事業計画のはなし</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-center { content: counter(page); }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: "IPAGothic", "IPAPGothic", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.9;
+    color: #23282d;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  p { margin: 0 0 1em; }
+  strong { color: #0b4f6c; }
+
+  /* ---------- 表紙 ---------- */
+  .cover {
+    height: 252mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+    text-align: center;
+    background: linear-gradient(160deg, #0b4f6c 0%, #145c7e 55%, #1b7a9c 100%);
+    color: #fff;
+    margin: -18mm -16mm 0 -16mm;
+    padding: 0 22mm;
+  }
+  .cover .eyebrow {
+    font-size: 11pt;
+    letter-spacing: .3em;
+    opacity: .85;
+    margin-bottom: 2.4em;
+  }
+  .cover h1 {
+    font-size: 30pt;
+    line-height: 1.5;
+    margin: 0 0 .5em;
+    font-weight: bold;
+  }
+  .cover .sub {
+    font-size: 13pt;
+    line-height: 1.9;
+    opacity: .95;
+    margin-bottom: 3em;
+  }
+  .cover .rule {
+    width: 70px; height: 3px;
+    background: #ffb347;
+    margin: 0 auto 3em;
+  }
+  .cover .meta {
+    font-size: 10pt;
+    opacity: .8;
+    line-height: 2;
+  }
+
+  /* ---------- 見出し ---------- */
+  h2 {
+    font-size: 16pt;
+    color: #0b4f6c;
+    border-bottom: 3px solid #0b4f6c;
+    padding-bottom: .35em;
+    margin: 0 0 1.1em;
+    page-break-after: avoid;
+  }
+  h2 .num {
+    display: inline-block;
+    background: #0b4f6c;
+    color: #fff;
+    font-size: 10pt;
+    padding: .15em .7em;
+    border-radius: 3px;
+    margin-right: .7em;
+    vertical-align: middle;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #145c7e;
+    margin: 1.8em 0 .7em;
+    padding-left: .6em;
+    border-left: 5px solid #ffb347;
+    page-break-after: avoid;
+  }
+  .chapter { page-break-before: always; }
+
+  /* ---------- ボックス ---------- */
+  .box {
+    border-radius: 6px;
+    padding: .9em 1.1em;
+    margin: 1.2em 0;
+    page-break-inside: avoid;
+  }
+  .box .label {
+    display: inline-block;
+    font-size: 9pt;
+    font-weight: bold;
+    padding: .1em .6em;
+    border-radius: 3px;
+    margin-bottom: .5em;
+  }
+  .box p:last-child { margin-bottom: 0; }
+
+  .word { background: #f2f7fa; border: 1px solid #cfe0e9; }
+  .word .label { background: #0b4f6c; color: #fff; }
+
+  .point { background: #fff8ec; border: 1px solid #f0d9b0; }
+  .point .label { background: #e08a1e; color: #fff; }
+
+  .tatoe { background: #f4f7f2; border: 1px solid #d5e0cd; }
+  .tatoe .label { background: #5f8a4f; color: #fff; }
+
+  .warn { background: #fdf2f2; border: 1px solid #eecccc; }
+  .warn .label { background: #b03a3a; color: #fff; }
+
+  /* ---------- 表 ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.1em 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cdd7dd;
+    padding: .5em .7em;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #0b4f6c;
+    color: #fff;
+    font-weight: bold;
+  }
+  tbody tr:nth-child(even) td { background: #f6f9fb; }
+  td.num, th.num { text-align: right; }
+  .hl td { background: #fff4e0 !important; font-weight: bold; }
+
+  /* ---------- 目次 ---------- */
+  .toc { page-break-after: always; }
+  .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: t; }
+  .toc li {
+    counter-increment: t;
+    padding: .55em 0 .55em 3.2em;
+    border-bottom: 1px dotted #c5d2d9;
+    position: relative;
+    font-size: 11pt;
+  }
+  .toc li::before {
+    content: counter(t);
+    position: absolute; left: 0; top: .5em;
+    background: #0b4f6c; color: #fff;
+    width: 2.1em; text-align: center;
+    border-radius: 3px;
+    font-size: 9.5pt;
+    padding: .1em 0;
+  }
+  .toc li span { display: block; font-size: 9pt; color: #6a7880; line-height: 1.6; }
+
+  /* ---------- 図 ---------- */
+  .flow {
+    margin: 1.3em 0;
+    page-break-inside: avoid;
+  }
+  .flow .step {
+    border: 2px solid #0b4f6c;
+    border-radius: 6px;
+    padding: .7em 1em;
+    background: #fff;
+    margin-bottom: .2em;
+  }
+  .flow .step .t { font-weight: bold; color: #0b4f6c; }
+  .flow .step .d { font-size: 9.5pt; color: #4a565e; }
+  .flow .arrow { text-align: center; color: #0b4f6c; font-size: 13pt; line-height: 1.2; margin: .1em 0; }
+
+  .big {
+    text-align: center;
+    background: #0b4f6c;
+    color: #fff;
+    border-radius: 6px;
+    padding: 1em;
+    margin: 1.3em 0;
+    page-break-inside: avoid;
+  }
+  .big .n { font-size: 21pt; font-weight: bold; display: block; line-height: 1.4; }
+  .big .c { font-size: 9.5pt; opacity: .9; }
+
+  .lead {
+    font-size: 11.5pt;
+    background: #f2f7fa;
+    border-left: 5px solid #0b4f6c;
+    padding: 1em 1.2em;
+    margin: 0 0 1.6em;
+    line-height: 2;
+  }
+
+  ul.plain { padding-left: 1.3em; margin: 0 0 1em; }
+  ul.plain li { margin-bottom: .45em; }
+
+  .note {
+    font-size: 9pt;
+    color: #6a7880;
+    border-top: 1px solid #d8e0e5;
+    padding-top: .8em;
+    margin-top: 1.6em;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== 表紙 ===================== -->
+<div class="cover">
+  <div class="eyebrow">中学生にもわかる 事業計画</div>
+  <h1>「売り方」を教える<br>仕事は成り立つのか？</h1>
+  <div class="rule"></div>
+  <div class="sub">
+    ひとりの社長が、小さな会社に<br>
+    「モノの売り方」を教えて食べていく計画を、<br>
+    やさしい言葉で全部説明します。
+  </div>
+  <div class="meta">
+    2026年7月<br>
+    ※これは「事業計画書」をやさしく書き直したものです
+  </div>
+</div>
+
+<!-- ===================== 目次 ===================== -->
+<div class="toc">
+  <h2><span class="num">目次</span>この本の流れ</h2>
+  <p>むずかしい言葉は、出てくるたびに説明します。上から順に読めば、計画の全部がわかります。</p>
+  <ol>
+    <li>どんな仕事をしようとしているの？<span>まず「何をやる話なのか」をはっきりさせます</span></li>
+    <li>その仕事、ほしがる人はいるの？<span>いちばん大事な「お客さんはいるのか」問題</span></li>
+    <li>でも、このままだと勝てない<span>すでに強いライバルがいます</span></li>
+    <li>どの業界にしぼる？<span>リフォーム会社を選んだ理由</span></li>
+    <li>最大の問題は「働けるのが社長ひとり」<span>ここがこの計画のいちばんの山場</span></li>
+    <li>何を、いくらで売るの？<span>商品の中身と、値段の決め方</span></li>
+    <li>お客さんはどうやって見つける？<span>やることを2つだけに絞ります</span></li>
+    <li>いくら儲かるの？<span>3年間のお金の計画</span></li>
+    <li>目標はどう決める？（KGIとKPI）<span>「がんばる」ではなく数字で決めます</span></li>
+    <li>あぶないこと<span>失敗するとしたら、どこか</span></li>
+    <li>まず何をする？　90日テスト<span>いきなり全部やらない</span></li>
+  </ol>
+  <div class="box word">
+    <span class="label">この本の読み方</span>
+    <p>とちゅうで「用語」「ポイント」「たとえ話」「注意」の4つの色の箱が出てきます。急いでいる人は、<strong>オレンジの「ポイント」だけ拾い読み</strong>しても話がつながるように書いてあります。</p>
+  </div>
+</div>
+
+<!-- ===================== 1 ===================== -->
+<div class="chapter">
+<h2><span class="num">1</span>どんな仕事をしようとしているの？</h2>
+
+<div class="lead">
+ひとことで言うと、<strong>「モノが売れなくて困っている小さな会社に、売り方を教えてあげて、お金をもらう」</strong>仕事です。
+</div>
+
+<h3>まず、言葉の説明から</h3>
+
+<div class="box word">
+  <span class="label">用語</span>
+  <p><strong>中小企業（ちゅうしょうきぎょう）</strong>＝小さい会社・中くらいの会社のこと。日本の会社の99%以上がこれです。あなたの家の近くの工務店やお店も、たいていこれです。</p>
+  <p><strong>toC（トゥーシー）</strong>＝「to Consumer」の略で、<strong>ふつうの人（消費者）に売る</strong>という意味。ラーメン屋さん、美容室、リフォーム会社などがこれ。反対は toB（会社に売る）です。</p>
+  <p><strong>営業（えいぎょう）</strong>＝お客さんに会って、説明して、「買います」と言ってもらう仕事のこと。</p>
+  <p><strong>コンサル</strong>＝「コンサルタント」の略。<strong>会社の悩みを聞いて、解決の方法を教える人</strong>のこと。お医者さんの会社版だと思うとわかりやすいです。</p>
+</div>
+
+<h3>つまり、こういう仕事です</h3>
+
+<p>たとえば、家をリフォームする会社があるとします。チラシをまいて、お客さんから「見積もりください」と電話が来ます。ここまではうまくいっている。</p>
+
+<p>でも──<strong>10人のお客さんに会って、3人しか契約してくれない。</strong>残りの7人は「考えます」と言って、そのまま消えてしまう。</p>
+
+<p>この会社に、こう教えるのがこの仕事です。</p>
+
+<div class="box tatoe">
+  <span class="label">たとえ話</span>
+  <p>テストで70点の子がいるとします。頭が悪いわけじゃない。<strong>ただ「解き方のコツ」を知らないだけ</strong>。コツを教えたら90点になる。</p>
+  <p>会社の営業もこれと同じです。売れない会社は、やる気がないんじゃなくて、<strong>「売れる型（かた）」を知らないだけ</strong>。それを教えるのがこの仕事です。</p>
+</div>
+
+<div class="box point">
+  <span class="label">ポイント</span>
+  <p>この本のこれから先は、ずっとこの1つのことを考えます。<br><strong>「10人中3人しか買わない会社を、10人中4人にする」</strong>——それだけです。</p>
+</div>
+</div>
+
+<!-- ===================== 2 ===================== -->
+<div class="chapter">
+<h2><span class="num">2</span>その仕事、ほしがる人はいるの？</h2>
+
+<div class="lead">
+答えは<strong>「いる」</strong>。ただし、<strong>とても大事な"ただし"</strong>がつきます。ここを間違えると、いい仕事なのに1件も売れません。
+</div>
+
+<h3>「ほしい」には2種類ある</h3>
+
+<p>お客さんの「ほしい」は、じつは2種類あります。これを分けて考えないと失敗します。</p>
+
+<table>
+  <thead>
+    <tr><th style="width:26%">種類</th><th style="width:16%">強さ</th><th>どういうこと？</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>自分で気づいている「ほしい」</strong></td>
+      <td>弱い</td>
+      <td>「営業のやり方を教えてくれる人、いないかな」と自分から探している社長は、<strong>ほとんどいません</strong>。社長がネットで調べるのは「チラシ」「ホームページ」ばかりです。</td>
+    </tr>
+    <tr class="hl">
+      <td><strong>気づいていないけど困っている</strong></td>
+      <td>とても強い</td>
+      <td>「お客さんは来るのに、契約にならない」という<strong>痛み</strong>。これは<strong>ほぼ全部の会社が持っています</strong>。ただ、それが「営業の教え方で直る」と気づいていないだけ。</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="box point">
+  <span class="label">いちばん大事なポイント</span>
+  <p>だから、<strong>「営業を教えます」と言って売ってはいけません。</strong></p>
+  <p>✕「御社の営業を強化します」→ 何を買うのかわからない。「まあ、いつか」で終わる。<br>
+  ◎「<strong>問い合わせの数は同じまま、契約を1.3倍にします</strong>」→ 社長がいちばん気にしていることに、まっすぐ刺さる。</p>
+  <p>売るのは<strong>「教えること」ではなく「売れる率」</strong>です。</p>
+</div>
+
+<h3>本当に困っている、という4つの証拠</h3>
+
+<p>「たぶん困ってるはず」では計画になりません。調べた事実を4つ出します。</p>
+
+<div class="flow">
+  <div class="step">
+    <div class="t">証拠① 同じ商売なのに、成績が2倍以上ちがう</div>
+    <div class="d">リフォーム業界では、10人に会って3人契約が普通と言われます。ところが<strong>10人中7〜8人が契約する会社が実際にある</strong>。同じ商品を、同じ日本で売っているのに、です。</div>
+  </div>
+  <div class="arrow">↓　これは「才能の差」ではなく「やり方の差」＝<strong>教えれば埋められる差</strong></div>
+  <div class="step">
+    <div class="t">証拠② 人を増やして解決する道が、ふさがった</div>
+    <div class="d">2025年、<strong>人が足りなくてつぶれた会社は214件で過去最多</strong>。国の報告書も「今のままでいることが、いちばん危ない」と書いています。人を増やせないなら、<strong>今いる人の成績を上げるしかない</strong>。</div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">証拠③ お金はもう払っている</div>
+    <div class="d">対象になる会社は、チラシやホームページに<strong>すでにお金を使っています</strong>。つまり<strong>財布はもう開いている</strong>。新しくお金を出させるのではなく、その予算を少し移してもらうだけ。これは、ものすごく大きな違いです。</div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">証拠④ 同じことをして、すでに稼いでいる会社がある</div>
+    <div class="d">「船井総合研究所」という会社が、まさにこれをやって成功しています。<strong>お客さんがお金を払う、という事実がすでに証明ずみ</strong>。「本当に売れるの？」を確かめる必要すらありません。</div>
+  </div>
+</div>
+
+<h3>正直に、弱点も書きます</h3>
+
+<table>
+  <thead><tr><th style="width:45%">弱いところ</th><th>どうするか</th></tr></thead>
+  <tbody>
+    <tr><td>「営業は根性だ」と信じている社長がけっこういる</td><td><strong>説得しません。</strong>ひとりで世の中の考えを変えるのは無理。すでに「やり方を変えたい」と思っている人だけを相手にします。</td></tr>
+    <tr><td>研修は「効果が見えない」と思われがち</td><td><strong>「契約できた率」という1つの数字だけ</strong>で話す。始める前にその数字を測っておく。</td></tr>
+    <tr><td>ふつうの人に売る会社は、もうけが薄い</td><td>安い月額プラン（月4万円）を用意して、入り口を低くする。</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===================== 3 ===================== -->
+<div class="chapter">
+<h2><span class="num">3</span>でも、このままだと勝てない</h2>
+
+<div class="lead">
+需要はある。でも<strong>「小さい会社に営業を教えます」とだけ言っても、まず売れません。</strong>理由は2つあります。
+</div>
+
+<h3>理由1　すでに強い会社がいる</h3>
+
+<p>さっき証拠④で出てきた「船井総合研究所」。じつはこれ、味方ではなく<strong>強力なライバル</strong>です。全国に広がっていて、やり方も完成しています。</p>
+
+<div class="box tatoe">
+  <span class="label">たとえ話</span>
+  <p>近所にもう、めちゃくちゃ有名で行列のできるラーメン屋があるとします。その<strong>となりに、ふつうのラーメン屋を出す</strong>。勝てますか？　勝てません。</p>
+  <p>勝つなら「この街にはまだない、○○専門の店」にするしかない。それが次の話です。</p>
+</div>
+
+<h3>理由2　お客さんにお金の余裕が少ない</h3>
+
+<p>ふつうの人に売る会社は、値上げがしにくいのです。調べた数字がこちら。</p>
+
+<table>
+  <thead><tr><th>どんな会社か</th><th class="num">値上げできた会社の割合</th></tr></thead>
+  <tbody>
+    <tr><td>会社に売る会社（toB）</td><td class="num">41.0%</td></tr>
+    <tr class="hl"><td>ふつうの人に売る会社（toC）← 今回のお客さん</td><td class="num">28.7%</td></tr>
+  </tbody>
+</table>
+
+<p>材料が高くなっても、値段に乗せられない。<strong>つまり手元にお金が残りにくい。</strong>だから、よくある「月30万〜100万円のコンサル料」をそのまま出しても、まず契約できません。</p>
+
+<div class="box point">
+  <span class="label">ポイント：3つの作戦変更</span>
+  <p><strong>①ひとつの業界だけにしぼる</strong>　→　「小さい会社ぜんぶ」ではなく「リフォーム会社だけ」。せまくすると、その業界の言葉で話せる専門家になれます。<br>
+  <strong>②いきなり高い月額を狙わない</strong>　→　安い月額プランを用意して入り口を低くする。<br>
+  <strong>③国の補助金を使う</strong>　→　国が費用の一部を出してくれる制度があります。これを一緒に申請してあげれば、お客さんの負担が減ります。</p>
+</div>
+
+<div class="box warn">
+  <span class="label">注意</span>
+  <p>ただし<strong>補助金は「必ずもらえる」ものではありません。</strong>審査に落ちることがあります。だから「補助金が出る前提の値段」にしてはいけません。<strong>補助金なしでも成り立つ値段にしておいて、通ったらラッキー</strong>、という考え方にします。</p>
+</div>
+</div>
+
+<!-- ===================== 4 ===================== -->
+<div class="chapter">
+<h2><span class="num">4</span>どの業界にしぼる？</h2>
+
+<div class="lead">
+答え：<strong>リフォーム会社</strong>（家の壁を塗りかえたり、お風呂やキッチンを新しくする会社）にしぼります。
+</div>
+
+<h3>選ぶときに考えた5つのこと</h3>
+
+<table>
+  <thead><tr><th style="width:38%">条件</th><th>なぜ大事か</th></tr></thead>
+  <tbody>
+    <tr><td>①1回の売上が大きい</td><td>1件100〜300万円。だから「1件増えるだけ」で会社がよろこぶ＝お金を払ってもらえる</td></tr>
+    <tr><td>②お客さんと会って話して売る</td><td>会って話すからこそ「やり方」を教える意味がある。自動販売機では教えようがない</td></tr>
+    <tr><td>③会社の数がとても多い</td><td>1社に断られても次がある。この業界だけで食べていける</td></tr>
+    <tr><td>④会社ごとの成績の差が大きい</td><td><strong>これが決め手。</strong>差が大きい＝「直せる余地がある」ことの証明になる</td></tr>
+    <tr><td>⑤まとめ役の団体がある</td><td>材料メーカーや本部があるので、<strong>1回話をつけると何十社にも届く</strong>（ひとりで営業するには超重要）</td></tr>
+  </tbody>
+</table>
+
+<h3>決め手は「差が2倍以上ある」こと</h3>
+
+<div class="big">
+  <span class="n">10人中3人　　vs　　10人中7〜8人</span>
+  <span class="c">同じリフォーム業界の中で、これだけ差がついている</span>
+</div>
+
+<p>これはすごいことです。同じ商品、同じ日本、同じお客さん。なのに<strong>2倍以上ちがう</strong>。ということは、下の会社は「運が悪い」のではなく<strong>「やり方を知らないだけ」</strong>。</p>
+
+<div class="box point">
+  <span class="label">ポイント</span>
+  <p>この差が、そのまま<strong>売り込みのセリフ</strong>になります。<br>「同じ業界に、10人中8人契約している会社が実際にあります。<strong>何がちがうか、知りたくないですか？</strong>」</p>
+  <p>しかも、その「勝っている会社のやり方」は、すでに本や記事で公開されています。<strong>ゼロから考え出す必要がない</strong>のも大きい。</p>
+</div>
+
+<h3>どんな会社をお客さんにするか</h3>
+
+<ul class="plain">
+  <li>1年の売上が<strong>1億〜10億円</strong>くらいのリフォーム会社</li>
+  <li>営業する人が<strong>3〜15人</strong>くらい</li>
+  <li><strong>社長だけが売るのがうまい</strong>（社員が育っていない）</li>
+  <li>チラシやホームページには<strong>すでにお金を使っている</strong></li>
+  <li><strong>社長ひとりで「買う」と決められる</strong>　←　これがとても大事</li>
+</ul>
+
+<div class="box word">
+  <span class="label">なぜ「社長ひとりで決められる」が大事？</span>
+  <p>大きい会社だと「会議で相談します」「上司に確認します」となって、決まるまでに何ヶ月もかかります。ひとりで働く以上、<strong>そんな時間はありません</strong>。社長に1回会って、その場で決まる。この速さが命です。</p>
+</div>
+</div>
+
+<!-- ===================== 5 ===================== -->
+<div class="chapter">
+<h2><span class="num">5</span>最大の問題は「働けるのが社長ひとり」</h2>
+
+<div class="lead">
+ここがこの計画で<strong>いちばん重要な章</strong>です。ここを間違えると、お客さんがいても事業が壊れます。
+</div>
+
+<h3>時間は絶対に増やせない</h3>
+
+<p>お金は借りられます。でも<strong>時間だけは、どうやっても増やせません。</strong>ひとりで働ける時間を計算するとこうなります。</p>
+
+<table>
+  <thead><tr><th>何に使う時間か</th><th class="num">わりあい</th><th class="num">1ヶ月の時間</th></tr></thead>
+  <tbody>
+    <tr class="hl"><td><strong>お客さんに教える時間</strong></td><td class="num">50%</td><td class="num"><strong>100時間</strong></td></tr>
+    <tr><td>新しいお客さんを探す時間</td><td class="num">30%</td><td class="num">60時間</td></tr>
+    <tr><td>資料づくり・お金の計算など</td><td class="num">20%</td><td class="num">40時間</td></tr>
+    <tr><td><strong>合計</strong></td><td class="num">100%</td><td class="num"><strong>200時間</strong></td></tr>
+  </tbody>
+</table>
+
+<p><strong>「教える時間は月100時間まで」</strong>。これがこの事業の天井です。ここから全部を逆算します。</p>
+
+<h3>やり方Aとやり方B、どっちを選ぶか</h3>
+
+<p>ここで運命が分かれます。教え方は大きく2つあります。</p>
+
+<table>
+  <thead><tr><th style="width:34%">　</th><th>A：1社ずつ訪問して教える</th><th>B：何社かをまとめて教える</th></tr></thead>
+  <tbody>
+    <tr><td>1社にかかる時間</td><td>月12時間（移動の時間もかかる）</td><td>6社まとめて、3ヶ月で80時間</td></tr>
+    <tr><td>100時間で何社みれる？</td><td><strong>8社で満員</strong></td><td>6社×2グループ＝12社でも余裕</td></tr>
+    <tr><td>1時間あたりの売上</td><td>1.7万円</td><td><strong>9万円〜17万円</strong></td></tr>
+    <tr class="hl"><td><strong>1年の売上の限界</strong></td><td><strong>1,920万円で頭打ち</strong></td><td><strong>1億円以上まで伸びる</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="box tatoe">
+  <span class="label">たとえ話：家庭教師か、学校の先生か</span>
+  <p><strong>Aは家庭教師</strong>。1人の家に行って、1人だけに教える。ていねいだけど、1日に何人も回れない。生徒が9人目になったら、もう体がもたない。</p>
+  <p><strong>Bは学校の先生</strong>。同じ1時間の授業で、30人にいっぺんに教えられる。<strong>先生の労力は同じなのに、届く人数がぜんぜん違う。</strong></p>
+  <p>ひとりで働くなら、<strong>絶対に「学校の先生」型を選ばないといけません。</strong></p>
+</div>
+
+<div class="box word">
+  <span class="label">用語</span>
+  <p>このBのやり方を<strong>「コホート型」</strong>と呼びます。むずかしそうですが、意味は<strong>「同じ時期に始めた仲間で、いっしょに進む」</strong>だけ。<strong>学校のクラスとまったく同じ</strong>だと思ってください。4月に入学した仲間で、いっしょに3ヶ月がんばる。それだけです。</p>
+</div>
+
+<div class="box point">
+  <span class="label">おまけの良いこと</span>
+  <p>まとめて教えると、<strong>教わる側の成績も上がります。</strong>ほかの会社が「うちはもうやりました」と言うと、「うちもやらなきゃ」となるからです。クラスで自分だけ宿題を忘れると、気まずいのと同じ。<br>実際、この方式は<strong>最後までやりきる人の割合が96%</strong>という報告もあります。</p>
+</div>
+
+<h3>「やらないこと」を決める</h3>
+
+<p>ひとりで働くとき、<strong>「何をやらないか」を決めることが、そのまま作戦になります。</strong>時間は増えないので、何かをやる＝何かをあきらめる、だからです。</p>
+
+<table>
+  <thead><tr><th style="width:40%">やらないこと</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr><td>1社ずつ訪問して教える</td><td>移動時間がいちばんのムダ。ひとりでは致命的</td></tr>
+    <tr><td>代わりに営業してあげる</td><td>自分が働くことになる＝時間を売ることになる</td></tr>
+    <tr><td>いくつもの業界を同時に</td><td>専門家に見えなくなる。教材も使い回せない</td></tr>
+    <tr><td>大きい会社を相手にする</td><td>会議や報告書に時間を取られる</td></tr>
+    <tr><td>広告をたくさん出す</td><td>調整に時間が吸われる</td></tr>
+    <tr><td>電話営業・飛び込み</td><td>時間がいくらあっても足りない</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===================== 6 ===================== -->
+<div class="chapter">
+<h2><span class="num">6</span>何を、いくらで売るの？</h2>
+
+<div class="lead">
+商品は4つ。<strong>安いものから高いものへ、階段のように</strong>並べます。いきなり高いものは買ってもらえないからです。
+</div>
+
+<h3>4つの商品</h3>
+
+<div class="flow">
+  <div class="step">
+    <div class="t">入口：無料のオンライン説明会（月1回）</div>
+    <div class="d">「10人中3人の会社と、10人中8人の会社は何がちがうか」という話をします。録画を使い回せるので、自分の時間はほとんど減りません。</div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">① 営業のけんしん　　30万円（30日間）</div>
+    <div class="d">お客さんとの会話を録音してもらい、それをAIで分析。<strong>「どこがダメか」を紙にまとめて渡します。</strong>病院の健康診断と同じ。</div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">② 90日の本コース　　150万〜320万円　★これが本命</div>
+    <div class="d">6社をひとつのクラスにして、3ヶ月いっしょに進みます。2週に1回のオンライン授業、動画教材、月1回の個別面談。<strong>実際に「売れる型」を作って、体に入れるところまでやります。</strong></div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">③ 会員クラブ　　月4万円 / 月10万円</div>
+    <div class="d">卒業した会社が入る月額クラブ。月1回、みんなで成功例を共有。<strong>会員が増えても自分の仕事はほとんど増えないのがミソ。</strong></div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">④ 上級コース　　年400万円（3社まで）</div>
+    <div class="d">3年目から。売上そのものより、<strong>「これがあると②が安く見える」という効果</strong>のほうが大きい。</div>
+  </div>
+</div>
+
+<h3>「けんしん」は必ず30日で終わらせる</h3>
+
+<div class="box warn">
+  <span class="label">ここ、すごく大事</span>
+  <p>ひとりで働くとき、<strong>「いつまで」を決めていない商品を持つと、事業が死にます。</strong></p>
+  <p>「ちょっと相談いいですか？」が永遠に続くからです。1社だけならいい。でも20社に言われたら？　本コースを教える時間がなくなります。だから<strong>30日でおしまい、とはっきり決めます。</strong></p>
+</div>
+
+<table>
+  <thead><tr><th style="width:20%">日</th><th>やること</th></tr></thead>
+  <tbody>
+    <tr><td>1日目</td><td>オンラインで60分の聞き取り（今の成績を測る）</td></tr>
+    <tr><td>2〜14日目</td><td>お客さんとの会話の録音3件を送ってもらい、分析</td></tr>
+    <tr><td>21日目</td><td><strong>報告会（90分）</strong>。結果と「直すべき順番」を渡す</td></tr>
+    <tr><td>22〜30日目</td><td>質問にチャットで答える</td></tr>
+    <tr class="hl"><td><strong>31日目</strong></td><td><strong>サポート終了</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="box point">
+  <span class="label">わざと「やらない」ことがある</span>
+  <p>けんしんでは<strong>「直してあげること」はしません。</strong>「どこが悪いか」を教えるだけで止めます。</p>
+  <p>なぜか？　ここで直してしまうと、<strong>「けんしんだけでいいや」となって、本命の90日コースが売れなくなる</strong>からです。<br><strong>けんしん＝病名を伝える。90日コース＝治療する。</strong>この線引きが、事業のしくみそのものです。</p>
+  <p>そのかわり、<strong>けんしん代の30万円は、60日以内に本コースに申し込めば全額を値引き</strong>します。つまり実質タダ。だから申し込みやすく、しかも「60日以内」という期限が背中を押します。</p>
+</div>
+
+<h3>値段の決め方：会社の大きさで変える</h3>
+
+<p>ここが、この計画で<strong>いちばん賢いところ</strong>です。</p>
+
+<p>同じクラスに座っていても、<strong>会社の大きさによって「得する金額」がぜんぜん違います。</strong></p>
+
+<table>
+  <thead><tr><th>営業する人の数</th><th class="num">その会社が1年で得する金額</th><th class="num">もらう値段</th></tr></thead>
+  <tbody>
+    <tr><td>3〜5人</td><td class="num">450万円</td><td class="num">150万円</td></tr>
+    <tr><td>6〜10人</td><td class="num">900万円</td><td class="num">250万円</td></tr>
+    <tr class="hl"><td>11〜15人</td><td class="num">1,350万円</td><td class="num"><strong>320万円</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="box point">
+  <span class="label">ここがすごい</span>
+  <p><strong>3社とも、同じ授業に座っているだけ。教える手間はまったく同じです。</strong></p>
+  <p>なのに値段は2倍以上ちがう。つまり<strong>働く時間を1分も増やさずに、売上が5割〜9割増える</strong>。ひとりで働く人にとって、これ以上おいしい話はありません。</p>
+  <p>ぜんぶ同じ値段にするのは、<strong>大きい会社から取りそこねている</strong>ということなんです。</p>
+</div>
+
+<div class="box warn">
+  <span class="label">でも、1年目は値上げしません</span>
+  <p>理由はかんたん。<strong>1年目は「うちで成功しました」という実例がゼロだから。</strong></p>
+  <p>実例のない人が高い値段を言っても、誰も買いません。<strong>値上げの材料は「実績の数字」です。</strong>1社目で「10人中3人→10人中4人になりました」という結果が出た瞬間、それが値上げの許可証になります。</p>
+  <p>だから1年目は<strong>「値段より実例」</strong>。順番を守ります。</p>
+</div>
+</div>
+
+<!-- ===================== 7 ===================== -->
+<div class="chapter">
+<h2><span class="num">7</span>お客さんはどうやって見つける？</h2>
+
+<div class="lead">
+やることは<strong>2つだけ</strong>にします。ひとりだから、あれこれ手を出すと全部が中途半端になります。
+</div>
+
+<h3>方法1（最重要）：メーカーや本部と組む</h3>
+
+<p>リフォーム業界には、材料をつくるメーカーや、加盟店をまとめる本部があります。そこと組むのです。</p>
+
+<div class="box tatoe">
+  <span class="label">たとえ話</span>
+  <p>クラス全員に手紙を配りたいとき、<strong>30人に1枚ずつ渡す</strong>のと、<strong>先生に頼んで配ってもらう</strong>のとでは、手間がぜんぜん違いますよね。</p>
+  <p>メーカーや本部は、この「先生」です。<strong>1回話をつけるだけで、何十社にも届く。</strong>ひとりで営業する人にとって、これしか方法はありません。</p>
+</div>
+
+<p>しかもメーカー側にも得があります。加盟店の売上が増えれば、自分たちの材料も売れるからです。<strong>お互い得</strong>なので、話を聞いてもらえます。</p>
+
+<h3>方法2：月1回のオンライン説明会</h3>
+
+<p>「10人中3人の会社と、10人中8人の会社は何がちがうか」というテーマで、月1回。移動ゼロ。資料も録画も使い回せる。<strong>1回2時間で15社に届きます。</strong></p>
+
+<h3>やらない集客</h3>
+
+<p><strong>電話営業、飛び込み、広告の大量出稿、SNSの毎日投稿。</strong>どれも時間を無限に吸い取ります。60時間しかない営業の時間は、<strong>全部「メーカーとの交渉」と「説明会」に使います。</strong></p>
+
+<div class="box warn">
+  <span class="label">この計画の、いちばん弱いところ</span>
+  <p>正直に書きます。<strong>この「メーカーと組む」がうまくいかないと、計画は成り立ちません。</strong></p>
+  <p>計算すると、自分の説明会だけで必要な24社を集めようとすると、<strong>年360社に説明しないといけません</strong>。ひとりでは絶対に無理です。<br>だから<strong>「半分はメーカー経由で集める」</strong>ことが前提になっています。ここが崩れたら計画ごと作り直しです。<strong>だから最初に試すのもここ</strong>です。</p>
+</div>
+</div>
+
+<!-- ===================== 8 ===================== -->
+<div class="chapter">
+<h2><span class="num">8</span>いくら儲かるの？</h2>
+
+<div class="lead">
+3年間の計画です。<strong>これは「予想」であって「約束」ではありません。</strong>やってみて数字が出たら、必ず書き直します。
+</div>
+
+<h3>3年間の売上と利益</h3>
+
+<table>
+  <thead><tr><th>　</th><th class="num">1年目</th><th class="num">2年目</th><th class="num">3年目</th></tr></thead>
+  <tbody>
+    <tr><td>売上（入ってくるお金）</td><td class="num">1,350万円</td><td class="num">5,460万円</td><td class="num">1億1,010万円</td></tr>
+    <tr><td>かかるお金</td><td class="num">940万円</td><td class="num">2,600万円</td><td class="num">6,000万円</td></tr>
+    <tr class="hl"><td><strong>のこる利益</strong></td><td class="num"><strong>410万円</strong></td><td class="num"><strong>2,860万円</strong></td><td class="num"><strong>5,010万円</strong></td></tr>
+    <tr><td>教える時間（月）</td><td class="num">35時間</td><td class="num">50時間</td><td class="num">64時間</td></tr>
+  </tbody>
+</table>
+
+<div class="box point">
+  <span class="label">いちばん下の行を見てください</span>
+  <p>3年目でも<strong>「教える時間は月64時間」</strong>。上限の100時間に、まだ余裕があります。</p>
+  <p>これがこの計画のキモです。<strong>売上の数字を先に作って、あとから「ひとりで回るか」を計算し直しました。</strong>回らない計画は、どんなに数字が立派でも意味がないからです。</p>
+</div>
+
+<h3>うまくいかない場合も考えておく</h3>
+
+<p>計画は「うまくいく前提」だけ作ってはいけません。3つのパターンで持ちます。</p>
+
+<table>
+  <thead><tr><th style="width:22%">パターン</th><th>どうなったら</th><th class="num">3年目の売上</th></tr></thead>
+  <tbody>
+    <tr><td><strong>うまくいかない</strong></td><td>値上げできず、メーカーとも1社しか組めない</td><td class="num">3,640万円</td></tr>
+    <tr class="hl"><td><strong>ふつう（目標）</strong></td><td>値上げでき、メーカー3社と組める</td><td class="num">1億1,010万円</td></tr>
+    <tr><td><strong>すごくうまくいく</strong></td><td>メーカー6社、上級コースも売れる</td><td class="num">1億4,000万円</td></tr>
+  </tbody>
+</table>
+
+<div class="box point">
+  <span class="label">大事なこと</span>
+  <p><strong>いちばん悪いパターンでも3,640万円で、ちゃんと生活できます。</strong></p>
+  <p>これはひとりで働くことの<strong>大きな強み</strong>です。社員がいないので毎月出ていくお金が少ない。だから<strong>失敗しても、つぶれない</strong>。「大きく当たるかもしれないけど、外れても死なない」——これがいい事業の形です。</p>
+</div>
+
+<h3>始めるのに必要なお金</h3>
+
+<table>
+  <thead><tr><th>何に使う</th><th class="num">いくら</th></tr></thead>
+  <tbody>
+    <tr><td>動画の教材づくり</td><td class="num">120万円</td></tr>
+    <tr><td>ホームページ</td><td class="num">80万円</td></tr>
+    <tr><td>道具（AI分析ツールなど）</td><td class="num">30万円</td></tr>
+    <tr><td>半年分の生活費・運転資金</td><td class="num">300万円</td></tr>
+    <tr class="hl"><td><strong>合計</strong></td><td class="num"><strong>約530万円</strong></td></tr>
+  </tbody>
+</table>
+
+<p>会社を作るときに借りられる公的な融資を使う予定です。<strong>ひとりなので、必要なお金がとても少なくてすみます。</strong></p>
+</div>
+
+<!-- ===================== 9 ===================== -->
+<div class="chapter">
+<h2><span class="num">9</span>目標はどう決める？（KGIとKPI）</h2>
+
+<div class="lead">
+「がんばる」は目標ではありません。<strong>数字で決めて、毎週見ます。</strong>
+</div>
+
+<div class="box word">
+  <span class="label">用語</span>
+  <p><strong>KGI（ケー・ジー・アイ）</strong>＝<strong>最終的なゴール</strong>のこと。部活でいえば「全国大会に出る」。</p>
+  <p><strong>KPI（ケー・ピー・アイ）</strong>＝<strong>そのゴールに近づいているか確かめる、途中の数字</strong>。「毎日50本素振りする」「体重を3kg増やす」みたいなもの。</p>
+  <p>ゴールだけ決めても、今日何をすればいいかわかりません。<strong>だから両方いる</strong>んです。</p>
+</div>
+
+<h3>ゴール（KGI）は4つセットで持つ</h3>
+
+<table>
+  <thead><tr><th style="width:36%">ゴール</th><th class="num">3年目の目標</th><th>なぜこれ？</th></tr></thead>
+  <tbody>
+    <tr><td>① 売上</td><td class="num">1億1,000万円</td><td>事業の大きさ</td></tr>
+    <tr><td>② 利益</td><td class="num">5,000万円</td><td>実際に手元に残るお金</td></tr>
+    <tr class="hl"><td><strong>③ 教える時間</strong></td><td class="num"><strong>月100時間以内</strong></td><td><strong>これを入れないと①②を達成しても体が壊れる</strong></td></tr>
+    <tr><td>④ お客さんの成績アップ</td><td class="num">8割の会社で<br>10人中1人ぶん増</td><td>これが崩れたら、他の3つも続かない</td></tr>
+  </tbody>
+</table>
+
+<div class="box point">
+  <span class="label">なぜ「働く時間」までゴールに入れるのか</span>
+  <p>売上だけをゴールにすると、<strong>いくらでも達成できてしまう</strong>からです。休みなく働けばいい。でもその先にあるのは倒れることです。</p>
+  <p>だから<strong>「時間を増やさずに」という条件つきのゴール</strong>にします。<br><strong>ひとりの事業では、忙しいことは成功のしるしではなく、設計ミスのサインです。</strong></p>
+</div>
+
+<h3>毎週見るのは、たった3つ</h3>
+
+<p>売上や契約数は、見たときにはもう手おくれです（結果は過去のものだから）。だから<strong>「今日の自分が動かせること」だけ</strong>を毎週見ます。</p>
+
+<table>
+  <thead><tr><th style="width:46%">毎週見る数字</th><th class="num">目標</th></tr></thead>
+  <tbody>
+    <tr class="hl"><td><strong>メーカー・本部に声をかけた数</strong></td><td class="num">週2件</td></tr>
+    <tr><td>説明会の申し込み数</td><td class="num">週4社</td></tr>
+    <tr><td><strong>自分が働いた時間を記録する</strong></td><td class="num">毎週必ず</td></tr>
+  </tbody>
+</table>
+
+<p>3つ目に注目してください。<strong>「記録すること」自体が目標</strong>です。測らないと、時間は必ずオーバーするからです。</p>
+
+<h3>ここを下回ったら、作り直す</h3>
+
+<table>
+  <thead><tr><th style="width:46%">危険信号</th><th>どうする</th></tr></thead>
+  <tbody>
+    <tr><td>けんしんから本コースに進む人が3割を切った</td><td>商品の中身を作り直す</td></tr>
+    <tr><td>月額クラブをやめる人が5%を超えた</td><td>会員を増やすのをやめて、中身を見直す</td></tr>
+    <tr><td>働く時間が月100時間を超えた</td><td><strong>値上げするか、断る</strong>（増やす選択肢はない）</td></tr>
+    <tr><td>2回続けてお客さんの成績が上がらない</td><td><strong>いったん売るのをやめて</strong>、根本から作り直す</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===================== 10 ===================== -->
+<div class="chapter">
+<h2><span class="num">10</span>あぶないこと</h2>
+
+<div class="lead">
+いいことばかり書いた計画は、信用できません。<strong>失敗するとしたらどこか</strong>を先に書いておきます。
+</div>
+
+<table>
+  <thead><tr><th style="width:36%">あぶないこと</th><th>どうふせぐか</th></tr></thead>
+  <tbody>
+    <tr class="hl">
+      <td><strong>自分が倒れたら売上ゼロ</strong><br>（いちばん大きいリスク）</td>
+      <td>①働けなくなったときの保険に入る<br>②授業を動画にしておいて、<strong>延期できる形</strong>にする<br>③クラブは月1回なので、1回飛ばしても崩れない<br>④<strong>半年分の生活費を常に置いておく</strong></td>
+    </tr>
+    <tr>
+      <td>忙しくなりすぎる</td>
+      <td>月100時間を超えたら<strong>値上げか、お断り</strong>。「がんばって増やす」という選択肢を最初から消しておく</td>
+    </tr>
+    <tr>
+      <td>教えている間、新しいお客さんを探せない</td>
+      <td>クラス制なので<strong>教える時期と探す時期を交互にできる</strong>。「今月は授業、来月は営業」と分ける</td>
+    </tr>
+    <tr>
+      <td>メーカーとの提携に頼りすぎる</td>
+      <td>1社からの売上が<strong>全体の4割を超えないように</strong>する。2年目までに3社確保</td>
+    </tr>
+    <tr>
+      <td>教えても成績が上がらない</td>
+      <td>クラス制の「まわりがやってると自分もやる」効果を使う。<strong>やる気のない会社とは契約しない</strong>基準を持つ</td>
+    </tr>
+    <tr>
+      <td>法律の問題（訪問販売のルール）</td>
+      <td><strong>「押し売りを強くする」ではなく「お客さんの気持ちを正しく聞く」</strong>やり方として教える。法律にも合うし、そもそもそのほうが売れる</td>
+    </tr>
+    <tr>
+      <td>AIに仕事を取られる</td>
+      <td>AIを敵にせず<strong>道具として使う</strong>（会話の分析に使う）。人がやるべき「実際にやらせる」部分に価値を寄せる</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===================== 11 ===================== -->
+<div class="chapter">
+<h2><span class="num">11</span>まず何をする？　90日テスト</h2>
+
+<div class="lead">
+いきなり全部やってはいけません。<strong>90日で「これは本当に売れるのか」を確かめます。</strong>
+</div>
+
+<div class="flow">
+  <div class="step">
+    <div class="t">〜30日目　20社に話を聞きに行く</div>
+    <div class="d">「無料で診断します」と言って会いに行く。同時にメーカー3社にもアポを取る。<br><strong>合格ライン：10社以上が「契約率が課題です」と言うこと</strong></div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">〜60日目　けんしん（20万円）を5社にすすめる</div>
+    <div class="d"><strong>合格ライン：3社が実際にお金を払うこと</strong><br>← <strong>ここが本当の勝負。</strong>「いいですね」は何の意味もありません。<strong>財布を出すかどうかだけ</strong>が真実です。</div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">〜90日目　2〜4社で第1期のクラスをやる</div>
+    <div class="d">人数が足りなくても<strong>やります。</strong>目的は儲けることではなく<strong>「成功した実例を1つ作ること」</strong>だから。<br><strong>合格ライン：1社で「10人中3人→10人中4人」を実際に出すこと</strong></div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="step">
+    <div class="t">〜180日目　その実例を武器に、説明会と提携交渉を始める</div>
+    <div class="d"><strong>合格ライン：第2期が4社以上／メーカー1社と提携できること</strong></div>
+  </div>
+</div>
+
+<h3>ダメだったらどうする？</h3>
+
+<div class="box point">
+  <span class="label">やめるのではなく、業界を変える</span>
+  <p>60日目でけんしんが1社も売れなかったら、<strong>事業をやめるのではなく、業界を変えます。</strong>リフォームがダメなら、歯医者さん・美容クリニック・外構（庭や門）の会社へ。</p>
+  <p><strong>やり方（クラス制で教える）はそのまま使い回せます。</strong>これが「1つの業界にしぼる」作戦の、もうひとつの良さです。</p>
+</div>
+
+<div class="box warn">
+  <span class="label">ひとりだからこその、やめる基準</span>
+  <p>もし90日目に<strong>「これは直接会いに行かないと成果が出ない」</strong>とわかったら、<strong>この事業はやめます。</strong></p>
+  <p>訪問が必要なら、第5章のとおり<strong>売上1,920万円で頭打ち</strong>になります。ひとりで背負うリスクに見合いません。<strong>「やめる条件」を先に決めておく</strong>のは、負けを認めることではなく、<strong>だらだら続けて全部失うのを防ぐこと</strong>です。</p>
+</div>
+
+<h3>この計画を5行でまとめると</h3>
+
+<div class="flow">
+  <div class="step"><div class="t">1.　困っている会社はいる。ただし本人は気づいていない</div><div class="d">だから「営業を教えます」ではなく<strong>「契約できる率を上げます」</strong>と言う</div></div>
+  <div class="step"><div class="t">2.　ふつうにやると、強いライバルに負ける</div><div class="d">だから<strong>リフォーム業界だけ</strong>にしぼる</div></div>
+  <div class="step"><div class="t">3.　ひとりなので、1社ずつ訪問する形は絶対に選ばない</div><div class="d"><strong>クラス制（まとめて教える）</strong>だけが道</div></div>
+  <div class="step"><div class="t">4.　値段は会社の大きさで変える。ただし1年目は上げない</div><div class="d">手間は同じなのに売上が5〜9割増える。でも<strong>実例ゼロでは高く売れない</strong></div></div>
+  <div class="step"><div class="t">5.　まず90日。「けんしんを3社が買うか」だけ確かめる</div><div class="d">ダメなら業界を変える。<strong>全部に手を出す前に、小さく試す</strong></div></div>
+</div>
+
+<div class="note">
+  <strong>この資料について</strong><br>
+  これは正式な事業計画書を、中学生でも読めるように書き直したものです。市場の大きさや調査の数字は公開されている資料から引用していますが、<strong>売上の計画・値段・働く時間の見積もりは「こうなるはず」という予想（仮説）であり、実際の実績ではありません。</strong>90日テストの結果が出たら、必ず数字を書き直してください。<br>
+  また、国の補助金は年度ごとにルールが変わり、申請しても通らないことがあります。使うときは、そのときの正式な募集要項を必ず確認してください。
+</div>
+</div>
+
+</body>
+</html>
