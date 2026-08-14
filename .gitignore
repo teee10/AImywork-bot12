@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# prepare_fonts.py で再生成できるフォント成果物（サイズが大きいためリポジトリには含めない）
+course/fonts/*.ttf
