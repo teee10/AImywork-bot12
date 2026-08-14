@@ -1,0 +1,4 @@
+node_modules/
+.vercel
+# 生成フォント（course/fonts/prepare_fonts.py で再生成できるため管理外）
+course/fonts/*.ttf
