@@ -338,7 +338,7 @@ function s3(t) {
 // SERVICE SCENES  12-30s
 // ============================================================
 const SV = [
-  { no: '01', en: 'SALES OUTSOURCING', title: ['営業代行'], size: 160, copy: '売れる仕組みを、現場ごと届ける。', sub: '戦略設計から商談・クロージングまで、一気通貫で。' },
+  { no: '01', en: 'CLOSING OUTSOURCING', title: ['クロージング代行'], size: 110, copy: 'その商談を、成約に変える。', sub: '商談同席から契約締結・追客まで、決めきる。' },
   { no: '02', en: 'SALES TRAINING CONSULTING', title: ['営業マン育成', 'コンサルティング'], size: 100, copy: '個の力を、組織の武器に。', sub: '再現性のある育成で、自走する営業組織へ。' },
   { no: '03', en: 'MARKETING CONSULTING', title: ['マーケティング', 'コンサルティング'], size: 100, copy: '選ばれる理由を、設計する。', sub: '市場分析から集客導線まで、データで描く。' },
 ];
@@ -401,10 +401,10 @@ function glowDot(x, y, r, a = 1, col = CY) {
   ctx.restore();
 }
 
-// 01: 営業代行 — 成果へ向かう上昇パイプライン
+// 01: クロージング代行 — 成約へ向かう上昇パイプライン
 function gPipeline(lt) {
   const nodes = [[1080, 820], [1310, 660], [1540, 500], [1770, 340]];
-  const labels = [['STEP 1', '戦略設計'], ['STEP 2', 'アプローチ'], ['STEP 3', '商談'], ['STEP 4', '成約']];
+  const labels = [['STEP 1', '事前設計'], ['STEP 2', '商談'], ['STEP 3', '反論処理'], ['STEP 4', '成約']];
   const lp = seg(lt, 1.6, 4.2);
   const segs = nodes.length - 1;
   // base track
@@ -457,7 +457,7 @@ function gPipeline(lt) {
     ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 90 * a, y - 70 * a); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x + 90 * a - 26, y - 70 * a - 2); ctx.lineTo(x + 90 * a, y - 70 * a); ctx.lineTo(x + 90 * a - 6, y - 70 * a + 24); ctx.stroke();
     ctx.restore();
-    txt('RESULT', x + 60, y - 110, { size: 22, weight: 700, family: EN, color: '#fff', ls: 8, alpha: g });
+    txt('CLOSED', x + 60, y - 110, { size: 22, weight: 700, family: EN, color: '#fff', ls: 8, alpha: g });
   }
 }
 
@@ -695,13 +695,13 @@ function s7(t) {
 }
 
 // ============================================================
-// SCENE 8  36-45s  代行。育成。戦略。 → LOGO
+// SCENE 8  36-45s  成約。育成。戦略。 → LOGO
 // ============================================================
 function s8(t) {
   const lt = t - 36;
   if (lt < 1.5) {
     const k = Math.floor(lt / .5), kt = lt - k * .5;
-    const words = ['代行。', '育成。', '戦略。'];
+    const words = ['成約。', '育成。', '戦略。'];
     const bgc = ['#000', CY, '#fff'][k], fg = ['#fff', '#000', '#000'][k];
     ctx.fillStyle = bgc; ctx.fillRect(0, 0, W, H);
     const sc = lerp(1.18, 1, eOutExpo(seg(kt, 0, .3)));
@@ -709,7 +709,7 @@ function s8(t) {
     ctx.font = font(900, 330, JP); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = fg;
     ctx.fillText(words[k], 0, 0);
     ctx.restore();
-    txt(['SALES OUTSOURCING', 'TRAINING', 'MARKETING'][k], W / 2, H / 2 + 250, { size: 30, weight: 500, family: EN, color: fg, align: 'center', ls: 18, alpha: .7 });
+    txt(['CLOSING', 'TRAINING', 'MARKETING'][k], W / 2, H / 2 + 250, { size: 30, weight: 500, family: EN, color: fg, align: 'center', ls: 18, alpha: .7 });
     return { glitch: kt < .07 ? .5 : 0 };
   }
   bg(t, { grid: .4 * seg(lt, 2, 3), glow: seg(lt, 1.9, 3), pa: seg(lt, 2, 3) });
@@ -772,7 +772,7 @@ function s8(t) {
   const dl = eOutExpo(seg(l, 1.4, 2.2));
   ctx.fillStyle = grad(W / 2 - 300, 0, W / 2 + 300, 0, BL, CY); ctx.fillRect(W / 2 - 300 * dl, 640, 600 * dl, 2);
   reveal('売れる組織を、共に創る。', W / 2, 740, 1.9, l, { size: 54, weight: 900, align: 'center', stagger: .05, dur: .6, color: grad(W / 2 - 330, 0, W / 2 + 330, 0, '#ffffff', '#9eefff') });
-  txt('営業代行　｜　営業マン育成コンサルティング　｜　マーケティングコンサルティング', W / 2, 880, { size: 24, weight: 500, color: '#b9c1d0', align: 'center', ls: 3, alpha: seg(l, 2.8, 3.4) });
+  txt('クロージング代行　｜　営業マン育成コンサルティング　｜　マーケティングコンサルティング', W / 2, 880, { size: 24, weight: 500, color: '#b9c1d0', align: 'center', ls: 3, alpha: seg(l, 2.8, 3.4) });
   txt('SHINJUKU, TOKYO', W / 2, 930, { size: 20, weight: 300, family: EN, color: GR, align: 'center', ls: 12, alpha: seg(l, 3.0, 3.6) });
 
   const o = seg(lt, 8.0, 8.9);
