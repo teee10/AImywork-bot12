@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>株式会社サード PV</title>
+<style>
+  @font-face { font-family: "Noto Sans JP"; font-weight: 300; src: url(fonts/NotoSansJP-300.woff2) format("woff2"); }
+  @font-face { font-family: "Noto Sans JP"; font-weight: 500; src: url(fonts/NotoSansJP-500.woff2) format("woff2"); }
+  @font-face { font-family: "Noto Sans JP"; font-weight: 700; src: url(fonts/NotoSansJP-700.woff2) format("woff2"); }
+  @font-face { font-family: "Noto Sans JP"; font-weight: 900; src: url(fonts/NotoSansJP-900.woff2) format("woff2"); }
+  @font-face { font-family: "Oswald"; font-weight: 300; src: url(fonts/Oswald-300.ttf) format("truetype"); }
+  @font-face { font-family: "Oswald"; font-weight: 500; src: url(fonts/Oswald-500.ttf) format("truetype"); }
+  @font-face { font-family: "Oswald"; font-weight: 700; src: url(fonts/Oswald-700.ttf) format("truetype"); }
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+  body.preview { display: flex; align-items: center; justify-content: center; height: 100vh; cursor: pointer; }
+  body.preview canvas { max-width: 100vw; max-height: 100vh; width: auto; height: auto; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ============================================================
+//  株式会社サード 会社紹介PV  (1920x1080 / 30fps / 45s)
+//  renderFrame(t) は t 秒時点のフレームを決定的に描画する
+// ============================================================
+const W = 1920, H = 1080, FPS = 30, DUR = 45;
+const cv = document.getElementById('c'); cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d');
+const buf = document.createElement('canvas'); buf.width = W; buf.height = H;
+const bctx = buf.getContext('2d');
+const tint = document.createElement('canvas'); tint.width = W; tint.height = H;
+const tctx = tint.getContext('2d');
+const logoCv = document.createElement('canvas'); logoCv.width = W; logoCv.height = 400;
+const lctx = logoCv.getContext('2d');
+
+const JP = '"Noto Sans JP"', EN = '"Oswald"';
+const CY = '#00E0FF', BL = '#2A5CFF', GR = '#8A93A6', BG = '#04050A';
+
+// ---------- utils ----------
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, x) => a + (b - a) * x;
+const eOutExpo = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+const eOutCubic = x => 1 - Math.pow(1 - x, 3);
+const eInCubic = x => x * x * x;
+const eInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eOutBack = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+function rng(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const hash = (...n) => rng(n.reduce((a, b) => a * 31 + b * 7919 + 13, 7))();
+const font = (w, s, f) => `${w} ${s}px ${f}`;
+
+function reset() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+  ctx.letterSpacing = '0px'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+}
+
+function txt(s, x, y, o = {}) {
+  const { size = 60, weight = 700, family = JP, color = '#fff', align = 'left', ls = 0, alpha = 1, base = 'alphabetic' } = o;
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = font(weight, size, family);
+  ctx.letterSpacing = ls + 'px';
+  ctx.textBaseline = base;
+  ctx.fillStyle = color;
+  let w = ctx.measureText(s).width - ls;
+  let sx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  ctx.fillText(s, sx, y);
+  ctx.restore();
+  return w;
+}
+
+// 1文字ずつ下からせり上がる
+function reveal(s, x, y, t0, t, o = {}) {
+  const { size = 80, weight = 900, family = JP, color = '#fff', align = 'left', ls = 0, stagger = 0.05, dur = 0.6, alpha = 1 } = o;
+  ctx.save();
+  ctx.font = font(weight, size, family);
+  const chars = [...s];
+  const ws = chars.map(c => ctx.measureText(c).width + ls);
+  const total = ws.reduce((a, b) => a + b, 0) - ls;
+  let cx = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x;
+  ctx.beginPath(); ctx.rect(0, y - size * 1.25, W, size * 1.5); ctx.clip();
+  ctx.fillStyle = color;
+  const ba = ctx.globalAlpha;
+  chars.forEach((c, i) => {
+    const p = eOutExpo(seg(t, t0 + i * stagger, t0 + i * stagger + dur));
+    if (p > 0) {
+      ctx.globalAlpha = ba * p * alpha;
+      ctx.fillText(c, cx, y + (1 - p) * size * 1.1);
+    }
+    cx += ws[i];
+  });
+  ctx.restore();
+  return total;
+}
+
+function measure(s, size, weight, family, ls = 0) {
+  ctx.save(); ctx.font = font(weight, size, family); ctx.letterSpacing = ls + 'px';
+  const w = ctx.measureText(s).width - ls; ctx.restore(); return w;
+}
+
+function grad(x0, y0, x1, y1, a = CY, b = BL) {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  g.addColorStop(0, a); g.addColorStop(1, b); return g;
+}
+
+// ---------- background ----------
+const parts = [...Array(150)].map((_, i) => {
+  const r = rng(i + 1);
+  return { x: r() * W, y: r() * H, z: .2 + r() * .8, s: r() * 2 + .6, ph: r() * 6.28 };
+});
+function bg(t, o = {}) {
+  const { grid = 0.6, glow = 1, pa = 1, hue = 0 } = o;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+  if (glow > 0) {
+    const gx = W * .5 + Math.sin(t * .3) * 420, gy = H * .55 + Math.cos(t * .23) * 160;
+    let g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 950);
+    g.addColorStop(0, `rgba(42,92,255,${.20 * glow})`); g.addColorStop(1, 'rgba(42,92,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const hx = W * .8 + Math.cos(t * .21) * 200, hy = H * .2 + Math.sin(t * .31) * 100;
+    g = ctx.createRadialGradient(hx, hy, 0, hx, hy, 600);
+    g.addColorStop(0, `rgba(0,224,255,${.08 * glow})`); g.addColorStop(1, 'rgba(0,224,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  if (grid > 0) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(120,160,255,${.07 * grid})`; ctx.lineWidth = 1;
+    const sp = 96, off = (t * 18) % sp;
+    ctx.beginPath();
+    for (let x = -sp + off; x < W + sp; x += sp) { ctx.moveTo(Math.round(x) + .5, 0); ctx.lineTo(Math.round(x) + .5, H); }
+    for (let y = 12; y < H; y += sp) { ctx.moveTo(0, y + .5); ctx.lineTo(W, y + .5); }
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (pa > 0) {
+    ctx.save();
+    for (const p of parts) {
+      const y = ((p.y - t * 38 * p.z) % H + H) % H;
+      const x = p.x + Math.sin(t * .5 + p.ph) * 22;
+      ctx.globalAlpha = pa * (.12 + .5 * p.z) * (.6 + .4 * Math.sin(t * 2 + p.ph));
+      ctx.fillStyle = p.z > .85 ? CY : '#9fb4ff';
+      const s = p.s * p.z * 1.6;
+      ctx.fillRect(x, y, s, s);
+    }
+    ctx.restore();
+  }
+}
+
+// ---------- post effects ----------
+const grains = [...Array(6)].map((_, k) => {
+  const c = document.createElement('canvas'); c.width = 960; c.height = 540;
+  const g = c.getContext('2d'); const im = g.createImageData(960, 540); const r = rng(1000 + k);
+  for (let i = 0; i < im.data.length; i += 4) { const v = r() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  g.putImageData(im, 0, 0); return c;
+});
+let vignette;
+function post(t) {
+  if (!vignette) {
+    vignette = ctx.createRadialGradient(W / 2, H / 2, H * .55, W / 2, H / 2, H * 1.1);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)'); vignette.addColorStop(1, 'rgba(0,0,0,.6)');
+  }
+  ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .045;
+  ctx.drawImage(grains[Math.floor(t * FPS) % grains.length], 0, 0, W, H);
+  ctx.restore();
+}
+
+function glitch(a, seed) {
+  if (a <= 0) return;
+  bctx.globalCompositeOperation = 'source-over';
+  bctx.drawImage(cv, 0, 0);
+  const r = rng(seed * 101 + 7);
+  const n = Math.floor(3 + a * 16);
+  for (let i = 0; i < n; i++) {
+    const y = r() * H, h = 4 + r() * 70 * a, dx = (r() - .5) * 220 * a;
+    ctx.drawImage(buf, 0, y, W, h, dx, y, W, h);
+  }
+  // chromatic split
+  const off = 14 * a;
+  for (const [col, dx] of [['#ff0040', off], ['#00e0ff', -off]]) {
+    tctx.globalCompositeOperation = 'source-over'; tctx.drawImage(buf, 0, 0);
+    tctx.globalCompositeOperation = 'multiply'; tctx.fillStyle = col; tctx.fillRect(0, 0, W, H);
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .7 * a;
+    ctx.drawImage(tint, dx, 0); ctx.restore();
+  }
+}
+
+// ---------- HUD ----------
+function hud(t, a) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a * .55;
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  const m = 48, L = 34;
+  ctx.beginPath();
+  ctx.moveTo(m, m + L); ctx.lineTo(m, m); ctx.lineTo(m + L, m);
+  ctx.moveTo(W - m - L, m); ctx.lineTo(W - m, m); ctx.lineTo(W - m, m + L);
+  ctx.moveTo(m, H - m - L); ctx.lineTo(m, H - m); ctx.lineTo(m + L, H - m);
+  ctx.moveTo(W - m - L, H - m); ctx.lineTo(W - m, H - m); ctx.lineTo(W - m, H - m - L);
+  ctx.stroke();
+  ctx.restore();
+  txt('THIRD INC.  /  COMPANY PROFILE', m + 56, m + 24, { size: 17, weight: 500, family: EN, color: '#fff', ls: 5, alpha: a * .6 });
+  txt('SHINJUKU — TOKYO', W - m - 56, m + 24, { size: 17, weight: 500, family: EN, color: '#fff', ls: 5, align: 'right', alpha: a * .6 });
+  const sec = Math.floor(t), fr = Math.floor((t - sec) * FPS);
+  const tc = `00:00:${String(sec).padStart(2, '0')}:${String(fr).padStart(2, '0')}`;
+  txt(tc, W - m - 56, H - m - 10, { size: 17, weight: 300, family: EN, color: '#fff', ls: 4, align: 'right', alpha: a * .6 });
+  // progress
+  ctx.save(); ctx.globalAlpha = a * .5;
+  ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.fillRect(m + 56, H - m - 16, 260, 2);
+  ctx.fillStyle = CY; ctx.fillRect(m + 56, H - m - 16, 260 * (t / DUR), 2);
+  ctx.restore();
+  // blinking dot
+  if (Math.floor(t * 2) % 2 === 0) { ctx.save(); ctx.globalAlpha = a * .8; ctx.fillStyle = CY; ctx.beginPath(); ctx.arc(m + 330, H - m - 15, 4, 0, 7); ctx.fill(); ctx.restore(); }
+}
+
+// ============================================================
+// SCENE 1  0-4s  「営業は、才能じゃない。」
+// ============================================================
+function s1(t) {
+  bg(t, { grid: seg(t, 0, 2) * .6, glow: seg(t, .5, 3) * .7, pa: seg(t, 0, 2) });
+  const lp = eOutExpo(seg(t, .2, 1.4));
+  const lw = 1180 * lp;
+  ctx.save();
+  ctx.fillStyle = CY; ctx.shadowColor = CY; ctx.shadowBlur = 18;
+  ctx.fillRect(W / 2 - lw / 2, 560, lw, 2);
+  if (lp > 0 && lp < .999) { ctx.fillStyle = '#fff'; ctx.fillRect(W / 2 + lw / 2 - 6, 557, 12, 8); ctx.fillRect(W / 2 - lw / 2 - 6, 557, 12, 8); }
+  ctx.restore();
+
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, 557); ctx.clip();
+  reveal('営業は、才能じゃない。', W / 2, 515, .9, t, { size: 116, weight: 900, align: 'center', stagger: .07, dur: .7, ls: 6 });
+  ctx.restore();
+  txt('SALES IS NOT ABOUT TALENT.', W / 2, 636, { size: 30, weight: 300, family: EN, color: GR, align: 'center', ls: 16, alpha: seg(t, 1.8, 2.6) });
+
+  const o = seg(t, 3.35, 4.0);
+  if (o > 0) { ctx.fillStyle = `rgba(4,5,10,${eInCubic(o)})`; ctx.fillRect(0, 0, W, H); }
+  let g = 0;
+  if (t > 2.05 && t < 2.15) g = .25;
+  if (t > 3.1) g = seg(t, 3.1, 3.8) * .9;
+  return { glitch: g };
+}
+
+// ============================================================
+// SCENE 2  4-7s  「仕組みだ。」
+// ============================================================
+function s2(t) {
+  const lt = t - 4;
+  bg(t, { grid: .5, glow: 1.2 });
+  const sc = lerp(1.35, 1, eOutExpo(seg(lt, 0, .7))) * (1 + .035 * lt);
+  ctx.save();
+  ctx.translate(W / 2, H / 2 - 10); ctx.scale(sc, sc);
+  ctx.font = font(900, 290, JP); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.letterSpacing = '0px';
+  const s = '仕組みだ。';
+  const sp = (1 - eOutCubic(seg(lt, 0, .6))) * 34;
+  if (sp > .5) {
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = 'rgba(255,0,80,.65)'; ctx.fillText(s, -sp, 0);
+    ctx.fillStyle = 'rgba(0,224,255,.65)'; ctx.fillText(s, sp, 0);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  const g = ctx.createLinearGradient(0, -150, 0, 150); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#a9f3ff');
+  ctx.fillStyle = g; ctx.shadowColor = 'rgba(0,224,255,.45)'; ctx.shadowBlur = 40;
+  ctx.fillText(s, 0, 0);
+  ctx.restore();
+
+  const u = eOutExpo(seg(lt, .35, 1.2));
+  ctx.fillStyle = grad(W / 2 - 400, 0, W / 2 + 400, 0);
+  ctx.fillRect(W / 2 - 400 * u, H / 2 + 185, 800 * u, 5);
+  txt("IT'S ALL ABOUT THE SYSTEM.", W / 2, H / 2 + 262, { size: 32, weight: 300, family: EN, color: GR, align: 'center', ls: 20, alpha: seg(lt, .6, 1.3) });
+
+  const e = seg(lt, 2.5, 3.0);
+  if (e > 0) {
+    ctx.fillStyle = BG;
+    for (let i = 0; i < 12; i++) { const p = eInOut(clamp(e * 1.7 - i * .06)); ctx.fillRect(i % 2 ? W - W * p : 0, i * 90, W * p, 90); }
+  }
+  return { flash: lt < .25 ? (1 - lt / .25) * .9 : 0, glitch: lt < .18 ? .7 : 0 };
+}
+
+// ============================================================
+// SCENE 3  7-12s  第三の答え → THIRD
+// ============================================================
+function s3(t) {
+  const lt = t - 7;
+  bg(t, { grid: .6, glow: .8 + seg(lt, 3.5, 5) });
+  const out = eInCubic(seg(lt, 3.3, 3.8));
+  ctx.save();
+  ctx.translate(-160 * out, 0); ctx.globalAlpha = 1 - out;
+  const x0 = 260;
+  const dim = 1 - .7 * seg(lt, 1.9, 2.4);
+  ctx.save(); ctx.globalAlpha *= dim;
+  const w1 = reveal('自社で抱えるか。', x0, 400, .15, lt, { size: 84, weight: 700, stagger: .05 });
+  const w2 = reveal('外に丸投げするか。', x0, 530, .8, lt, { size: 84, weight: 700, stagger: .05 });
+  ctx.restore();
+  ctx.fillStyle = CY;
+  const k1 = eOutExpo(seg(lt, 1.8, 2.3)), k2 = eOutExpo(seg(lt, 1.95, 2.45));
+  ctx.fillRect(x0 - 20, 372, (w1 + 40) * k1, 4);
+  ctx.fillRect(x0 - 20, 502, (w2 + 40) * k2, 4);
+  txt('その先にある、', x0, 690, { size: 50, weight: 500, color: '#cfd6e4', alpha: seg(lt, 2.4, 2.9) });
+  reveal('第三の答え。', x0, 850, 2.7, lt, { size: 132, weight: 900, color: grad(x0, 0, x0 + 800, 0, '#ffffff', CY), stagger: .06 });
+  ctx.restore();
+
+  // THIRD
+  if (lt > 3.4) {
+    const zl = seg(lt, 4.3, 5.0);
+    const z = 1 + eInCubic(zl) * 5;
+    ctx.save();
+    ctx.translate(W / 2, H / 2); ctx.scale(z, z);
+    ctx.globalAlpha = 1 - eInCubic(seg(lt, 4.55, 5.0));
+    ctx.font = font(700, 330, EN); ctx.letterSpacing = '0px'; ctx.textBaseline = 'middle';
+    const letters = [...'THIRD'], lsp = 50;
+    const ws = letters.map(c => ctx.measureText(c).width);
+    const tw = ws.reduce((a, b) => a + b, 0) + lsp * (letters.length - 1);
+    let cx = -tw / 2;
+    ctx.beginPath(); ctx.rect(-W, -190, W * 2, 380); ctx.clip();
+    letters.forEach((c, i) => {
+      const p = eOutExpo(seg(lt, 3.55 + i * .08, 4.2 + i * .08));
+      ctx.fillStyle = '#fff'; ctx.globalAlpha = p;
+      ctx.fillText(c, cx, (1 - p) * 360);
+      cx += ws[i] + lsp;
+    });
+    ctx.restore();
+    txt('営業に、第三の答えを。', W / 2, H / 2 + 250, { size: 40, weight: 500, color: CY, align: 'center', ls: 14, alpha: seg(lt, 3.9, 4.3) * (1 - seg(lt, 4.3, 4.6)) });
+  }
+  return { glitch: (lt > 1.75 && lt < 1.85) ? .35 : 0, flash: seg(lt, 4.6, 5.0) * .9 };
+}
+
+// ============================================================
+// SERVICE SCENES  12-30s
+// ============================================================
+const SV = [
+  { no: '01', en: 'SALES OUTSOURCING', title: ['営業代行'], size: 160, copy: '売れる仕組みを、現場ごと届ける。', sub: '戦略設計から商談・クロージングまで、一気通貫で。' },
+  { no: '02', en: 'SALES TRAINING CONSULTING', title: ['営業マン育成', 'コンサルティング'], size: 100, copy: '個の力を、組織の武器に。', sub: '再現性のある育成で、自走する営業組織へ。' },
+  { no: '03', en: 'MARKETING CONSULTING', title: ['マーケティング', 'コンサルティング'], size: 100, copy: '選ばれる理由を、設計する。', sub: '市場分析から集客導線まで、データで描く。' },
+];
+
+function service(t) {
+  const idx = Math.min(2, Math.floor((t - 12) / 6)), lt = (t - 12) - idx * 6, d = SV[idx];
+  bg(t, { grid: .6, glow: 1 });
+  const ex = eInCubic(seg(lt, 5.45, 5.95));
+
+  // giant outlined number
+  ctx.save();
+  const nx = W - 70 + 260 * (1 - eOutExpo(seg(lt, .2, 1.4))) - lt * 10 - ex * 300;
+  ctx.font = font(700, 620, EN); ctx.letterSpacing = '-10px'; ctx.textAlign = 'right';
+  ctx.strokeStyle = `rgba(0,224,255,${.13 * (1 - ex)})`; ctx.lineWidth = 2;
+  ctx.strokeText(d.no, nx, H - 40);
+  ctx.restore();
+
+  // graphic
+  ctx.save(); ctx.globalAlpha = 1 - ex; ctx.translate(ex * -120, 0);
+  [gPipeline, gRadar, gFunnel][idx](lt);
+  ctx.restore();
+
+  // left column
+  ctx.save(); ctx.globalAlpha = 1 - ex; ctx.translate(ex * -200, 0);
+  const x0 = 160;
+  const lp = eOutExpo(seg(lt, .35, 1.0));
+  ctx.fillStyle = CY; ctx.fillRect(x0, 236, 56 * lp, 3);
+  txt('SERVICE ' + d.no, x0 + 76, 248, { size: 28, weight: 500, family: EN, color: CY, ls: 10, alpha: seg(lt, .4, .8) });
+  txt(d.en, x0, 300, { size: 24, weight: 300, family: EN, color: GR, ls: 8, alpha: seg(lt, .55, 1.0) });
+  let y = 300 + d.size * 1.15;
+  d.title.forEach((line, i) => {
+    reveal(line, x0 - 4, y, .5 + i * .18, lt, { size: d.size, weight: 900, stagger: .045, dur: .6 });
+    y += d.size * 1.2;
+  });
+  y += 20;
+  reveal(d.copy, x0, y, 1.3, lt, { size: 46, weight: 700, color: grad(x0, 0, x0 + 700, 0, '#ffffff', '#9eefff'), stagger: .03, dur: .5 });
+  txt(d.sub, x0, y + 62, { size: 25, weight: 300, color: '#b9c1d0', ls: 2, alpha: seg(lt, 2.0, 2.6) });
+  ctx.restore();
+
+  // enter wipe
+  const w = seg(lt, 0, .6);
+  if (w < 1) {
+    const px = lerp(-700, W + 200, eInOut(w)), sk = 260;
+    ctx.fillStyle = BG;
+    ctx.beginPath(); ctx.moveTo(px + 420, 0); ctx.lineTo(W + 400, 0); ctx.lineTo(W + 400, H); ctx.lineTo(px + 420 - sk, H); ctx.fill();
+    ctx.fillStyle = grad(px, 0, px + 420, 0, BL, CY);
+    ctx.beginPath(); ctx.moveTo(px + 120, 0); ctx.lineTo(px + 420, 0); ctx.lineTo(px + 420 - sk, H); ctx.lineTo(px + 120 - sk, H); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.moveTo(px + 60, 0); ctx.lineTo(px + 80, 0); ctx.lineTo(px + 80 - sk, H); ctx.lineTo(px + 60 - sk, H); ctx.fill();
+  }
+  return { flash: idx === 0 && lt < .2 ? (1 - lt / .2) * .8 : 0, glitch: lt < .08 ? .4 : 0 };
+}
+
+function glowDot(x, y, r, a = 1, col = CY) {
+  ctx.save(); ctx.globalAlpha *= a;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+  g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,224,255,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * .6, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// 01: 営業代行 — 成果へ向かう上昇パイプライン
+function gPipeline(lt) {
+  const nodes = [[1080, 820], [1310, 660], [1540, 500], [1770, 340]];
+  const labels = [['STEP 1', '戦略設計'], ['STEP 2', 'アプローチ'], ['STEP 3', '商談'], ['STEP 4', '成約']];
+  const lp = seg(lt, 1.6, 4.2);
+  const segs = nodes.length - 1;
+  // base track
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 2; ctx.setLineDash([6, 10]);
+  ctx.beginPath(); nodes.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+  ctx.restore();
+  // progress line
+  const pr = eInOut(lp) * segs;
+  ctx.save();
+  ctx.strokeStyle = CY; ctx.lineWidth = 4; ctx.shadowColor = CY; ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.moveTo(...nodes[0]);
+  let head = nodes[0];
+  for (let i = 0; i < segs; i++) {
+    const f = clamp(pr - i);
+    if (f <= 0) break;
+    const [ax, ay] = nodes[i], [bx, by] = nodes[i + 1];
+    head = [lerp(ax, bx, f), lerp(ay, by, f)];
+    ctx.lineTo(...head);
+  }
+  if (lp > 0) ctx.stroke();
+  ctx.restore();
+  // nodes
+  nodes.forEach(([x, y], i) => {
+    const appear = eOutBack(seg(lt, 1.2 + i * .12, 1.7 + i * .12));
+    const lit = pr >= i - .001 && lp > 0;
+    const litT = 1.6 + (i / segs) * 2.6;
+    ctx.save();
+    ctx.globalAlpha *= clamp(appear);
+    ctx.strokeStyle = lit ? CY : 'rgba(255,255,255,.4)'; ctx.lineWidth = 3;
+    ctx.fillStyle = BG;
+    ctx.beginPath(); ctx.arc(x, y, 22 * appear, 0, 7); ctx.fill(); ctx.stroke();
+    if (lit) {
+      ctx.fillStyle = CY; ctx.beginPath(); ctx.arc(x, y, 10, 0, 7); ctx.fill();
+      const pulse = seg(lt, litT, litT + .8);
+      if (pulse > 0 && pulse < 1) { ctx.strokeStyle = `rgba(0,224,255,${1 - pulse})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 22 + pulse * 60, 0, 7); ctx.stroke(); }
+    }
+    ctx.restore();
+    const la = seg(lt, litT - .1, litT + .4);
+    txt(labels[i][0], x - 24, y + 70, { size: 20, weight: 500, family: EN, color: CY, ls: 6, alpha: la });
+    txt(labels[i][1], x - 24, y + 108, { size: 32, weight: 700, color: '#fff', alpha: la });
+  });
+  if (lp > 0 && lp < 1) glowDot(head[0], head[1], 8);
+  // arrow burst at goal
+  const g = seg(lt, 4.2, 5.0);
+  if (g > 0) {
+    const [x, y] = nodes[3];
+    ctx.save(); ctx.strokeStyle = CY; ctx.lineWidth = 4; ctx.globalAlpha *= 1 - g * .3;
+    const a = eOutExpo(g);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 90 * a, y - 70 * a); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 90 * a - 26, y - 70 * a - 2); ctx.lineTo(x + 90 * a, y - 70 * a); ctx.lineTo(x + 90 * a - 6, y - 70 * a + 24); ctx.stroke();
+    ctx.restore();
+    txt('RESULT', x + 60, y - 110, { size: 22, weight: 700, family: EN, color: '#fff', ls: 8, alpha: g });
+  }
+}
+
+// 02: 育成 — スキルレーダー
+function gRadar(lt) {
+  const cx = 1400, cy = 560, R = 250;
+  const axes = ['ヒアリング', '提案力', 'クロージング', '行動量', 'マインド'];
+  const n = axes.length;
+  const ang = i => -Math.PI / 2 + i * 2 * Math.PI / n;
+  const gp = eOutExpo(seg(lt, 1.1, 2.0));
+  ctx.save();
+  // rotating ring
+  ctx.strokeStyle = 'rgba(0,224,255,.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([2, 12]);
+  ctx.beginPath(); ctx.arc(cx, cy, (R + 70) * gp, lt * .3, lt * .3 + Math.PI * 2 * gp); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.5;
+  for (let k = 1; k <= 4; k++) {
+    const r = R * k / 4 * gp;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) { const a = ang(i % n); i ? ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r) : ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+    ctx.stroke();
+  }
+  for (let i = 0; i < n; i++) { const a = ang(i); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R * gp, cy + Math.sin(a) * R * gp); ctx.stroke(); }
+  ctx.restore();
+  axes.forEach((s, i) => {
+    const a = ang(i);
+    const lx = cx + Math.cos(a) * (R + 50), ly = cy + Math.sin(a) * (R + 50) + 10;
+    txt(s, lx, ly, { size: 26, weight: 700, color: '#dfe6f2', align: Math.abs(Math.cos(a)) < .2 ? 'center' : Math.cos(a) > 0 ? 'left' : 'right', alpha: seg(lt, 1.6 + i * .08, 2.1 + i * .08) });
+  });
+  const before = [.32, .28, .22, .38, .3], after = [.92, .86, .82, .96, .9];
+  const ba = seg(lt, 1.8, 2.3);
+  const m = eInOut(seg(lt, 2.6, 3.9));
+  const poly = (vals, fill, stroke, a) => {
+    ctx.save(); ctx.globalAlpha *= a;
+    ctx.beginPath();
+    vals.forEach((v, i) => { const q = ang(i); const x = cx + Math.cos(q) * R * v, y = cy + Math.sin(q) * R * v; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth = 3; ctx.stroke();
+    ctx.restore();
+  };
+  poly(before, 'rgba(138,147,166,.18)', 'rgba(138,147,166,.8)', ba);
+  if (m > 0) {
+    const cur = before.map((b, i) => lerp(b, after[i], m));
+    ctx.save(); ctx.shadowColor = CY; ctx.shadowBlur = 25;
+    poly(cur, 'rgba(0,224,255,.16)', CY, 1);
+    ctx.restore();
+    cur.forEach((v, i) => { const q = ang(i); glowDot(cx + Math.cos(q) * R * v, cy + Math.sin(q) * R * v, 5, m); });
+  }
+  // legend
+  const lg = seg(lt, 2.2, 2.7);
+  ctx.save(); ctx.globalAlpha *= lg;
+  ctx.fillStyle = 'rgba(138,147,166,.9)'; ctx.fillRect(cx - 190, cy + R + 118, 28, 4);
+  ctx.restore();
+  txt('BEFORE', cx - 150, cy + R + 128, { size: 20, weight: 500, family: EN, color: GR, ls: 5, alpha: lg });
+  const la = seg(lt, 3.0, 3.5);
+  ctx.save(); ctx.globalAlpha *= la; ctx.fillStyle = CY; ctx.fillRect(cx + 30, cy + R + 118, 28, 4); ctx.restore();
+  txt('AFTER', cx + 70, cy + R + 128, { size: 20, weight: 500, family: EN, color: CY, ls: 5, alpha: la });
+}
+
+// 03: マーケ — ファネル
+const fparts = [...Array(160)].map((_, i) => { const r = rng(500 + i); return { u: r(), s: r() * 2 - 1, v: .25 + r() * .25, z: r() }; });
+function gFunnel(lt) {
+  const cx = 1400, top = 230, lh = 118, gap = 16;
+  const labels = [['認知', 'AWARENESS'], ['興味・関心', 'INTEREST'], ['比較・検討', 'CONSIDERATION'], ['選ばれる', 'CONVERSION']];
+  const widths = [780, 600, 430, 270, 150];
+  labels.forEach((l, i) => {
+    const p = eOutExpo(seg(lt, 1.1 + i * .22, 1.8 + i * .22));
+    if (p <= 0) return;
+    const y = top + i * (lh + gap);
+    const w0 = widths[i] / 2 * p, w1 = widths[i + 1] / 2 * p;
+    ctx.save();
+    const g = ctx.createLinearGradient(0, y, 0, y + lh);
+    const a0 = .10 + i * .07;
+    g.addColorStop(0, `rgba(42,92,255,${a0})`); g.addColorStop(1, `rgba(0,224,255,${a0 + .08})`);
+    ctx.fillStyle = g; ctx.strokeStyle = i === 3 ? CY : 'rgba(0,224,255,.5)'; ctx.lineWidth = i === 3 ? 3 : 1.5;
+    if (i === 3) { ctx.shadowColor = CY; ctx.shadowBlur = 24; }
+    ctx.beginPath(); ctx.moveTo(cx - w0, y); ctx.lineTo(cx + w0, y); ctx.lineTo(cx + w1, y + lh); ctx.lineTo(cx - w1, y + lh); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+    const ta = seg(lt, 1.5 + i * .22, 2.0 + i * .22);
+    txt(l[0], cx, y + lh / 2 + 4, { size: i === 3 ? 34 : 30, weight: i === 3 ? 900 : 700, color: '#fff', align: 'center', alpha: ta });
+    txt(l[1], cx, y + lh / 2 + 36, { size: 15, weight: 500, family: EN, color: i === 3 ? CY : GR, align: 'center', ls: 5, alpha: ta });
+  });
+  // flowing particles
+  const pa = seg(lt, 1.9, 2.6);
+  if (pa > 0) {
+    const yTop = top - 60, yBot = top + 4 * (lh + gap) - gap;
+    ctx.save();
+    for (const p of fparts) {
+      const u = (p.u + lt * p.v) % 1;
+      const y = lerp(yTop, yBot + 60, u);
+      const f = clamp((y - top) / (yBot - top));
+      const half = lerp(widths[0] / 2 + 40, widths[4] / 2, f) * .9;
+      const x = cx + p.s * half * (y < top ? 1.15 : 1);
+      const hot = f > .78;
+      ctx.globalAlpha = pa * (.35 + .6 * p.z) * (u > .95 ? (1 - u) * 20 : 1);
+      ctx.fillStyle = hot ? CY : '#9fb4ff';
+      const s = hot ? 4 : 2.5;
+      ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    }
+    ctx.restore();
+    const g = .5 + .5 * Math.sin(lt * 6);
+    glowDot(cx, yBot + 80, 10, pa * (.6 + .4 * g));
+  }
+}
+
+// ============================================================
+// SCENE 7  30-36s  SHINJUKU
+// ============================================================
+const BASE = 985;
+const buildings = (() => {
+  const r = rng(77), list = [];
+  let x = -200;
+  while (x < W + 400) {
+    const w = 50 + r() * 110;
+    const center = x + w / 2;
+    const maxH = center < 1180 ? 360 : 470;
+    list.push({ x, w, h: 110 + r() * (maxH - 110), ant: r() < .25, seed: Math.floor(r() * 1e6), kind: 'box' });
+    x += w + 6 + r() * 16;
+  }
+  // 東京都庁（ツインタワー）
+  list.push({ x: 1330, w: 250, h: 470, seed: 11, kind: 'tocho' });
+  // コクーンタワー
+  list.push({ x: 1680, w: 120, h: 520, seed: 12, kind: 'cocoon' });
+  list.forEach(b => { b.d = Math.abs(b.x + b.w / 2 - 1300) / 1600; });
+  return list.sort((a, b) => (a.kind === 'box' ? 0 : 1) - (b.kind === 'box' ? 0 : 1));
+})();
+
+function windows(b, x, top, h, t) {
+  const cols = Math.max(1, Math.floor((b.w - 16) / 16));
+  const rows = Math.floor((h - 20) / 22);
+  for (let c = 0; c < cols; c++) for (let rr = 0; rr < rows; rr++) {
+    const hv = hash(b.seed, c, rr);
+    if (hv < .55) continue;
+    const fl = hash(b.seed, c, rr, Math.floor(t * 1.5 + hv * 10));
+    ctx.fillStyle = fl > .15 ? (hv > .93 ? 'rgba(0,224,255,.8)' : 'rgba(170,200,255,.45)') : 'rgba(170,200,255,.1)';
+    ctx.fillRect(x + 10 + c * 16, top + 14 + rr * 22, 6, 9);
+  }
+}
+
+function s7(t) {
+  const lt = t - 30;
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#03040A'); sky.addColorStop(.7, '#0A1430'); sky.addColorStop(1, '#122457');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  bg(t, { grid: 0, glow: 0, pa: .5 });
+  ctx.globalCompositeOperation = 'source-over';
+  const hz = ctx.createRadialGradient(1300, BASE, 0, 1300, BASE, 1100);
+  hz.addColorStop(0, 'rgba(0,160,255,.28)'); hz.addColorStop(1, 'rgba(0,160,255,0)');
+  ctx.fillStyle = hz; ctx.fillRect(0, 0, W, H);
+
+  const pan = -lt * 22;
+  ctx.save(); ctx.translate(pan, 0);
+  for (const b of buildings) {
+    const p = eOutExpo(seg(lt, .15 + b.d * .9, 1.2 + b.d * .9));
+    if (p <= 0) continue;
+    const h = b.h * p, top = BASE - h;
+    ctx.save();
+    ctx.fillStyle = '#060A18'; ctx.strokeStyle = 'rgba(0,224,255,.55)'; ctx.lineWidth = 1.5;
+    if (b.kind === 'box') {
+      ctx.fillRect(b.x, top, b.w, h); ctx.strokeRect(b.x + .5, top + .5, b.w, h);
+      if (b.ant) { ctx.beginPath(); ctx.moveTo(b.x + b.w / 2, top); ctx.lineTo(b.x + b.w / 2, top - 50 * p); ctx.stroke(); if (Math.floor(t * 2 + b.seed) % 2) { ctx.fillStyle = '#ff3355'; ctx.fillRect(b.x + b.w / 2 - 2, top - 52 * p, 4, 4); } }
+      windows(b, b.x, top, h, t);
+    } else if (b.kind === 'tocho') {
+      const bodyH = h * .72, tw = b.w * .36;
+      ctx.beginPath();
+      ctx.rect(b.x, BASE - bodyH, b.w, bodyH);
+      ctx.rect(b.x, top, tw, h - bodyH + 1); ctx.rect(b.x + b.w - tw, top, tw, h - bodyH + 1);
+      ctx.fill();
+      ctx.strokeStyle = CY; ctx.lineWidth = 2; ctx.shadowColor = CY; ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(b.x, BASE); ctx.lineTo(b.x, top); ctx.lineTo(b.x + tw, top); ctx.lineTo(b.x + tw, BASE - bodyH);
+      ctx.lineTo(b.x + b.w - tw, BASE - bodyH); ctx.lineTo(b.x + b.w - tw, top); ctx.lineTo(b.x + b.w, top); ctx.lineTo(b.x + b.w, BASE);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      windows({ w: b.w, seed: b.seed }, b.x, BASE - bodyH, bodyH, t);
+      windows({ w: tw, seed: b.seed + 1 }, b.x, top, h - bodyH, t);
+      windows({ w: tw, seed: b.seed + 2 }, b.x + b.w - tw, top, h - bodyH, t);
+    } else if (b.kind === 'cocoon') {
+      const cx = b.x + b.w / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - b.w * .32, BASE);
+      ctx.bezierCurveTo(cx - b.w * .75, BASE - h * .5, cx - b.w * .45, top + h * .08, cx, top);
+      ctx.bezierCurveTo(cx + b.w * .45, top + h * .08, cx + b.w * .75, BASE - h * .5, cx + b.w * .32, BASE);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = CY; ctx.lineWidth = 2; ctx.shadowColor = CY; ctx.shadowBlur = 14; ctx.stroke();
+      ctx.clip(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(0,224,255,.35)'; ctx.lineWidth = 1;
+      for (let k = -8; k < 16; k++) { ctx.beginPath(); ctx.moveTo(b.x - 60 + k * 22, BASE); ctx.lineTo(b.x + 60 + k * 22, top - 20); ctx.stroke(); ctx.beginPath(); ctx.moveTo(b.x + 180 - k * 22, BASE); ctx.lineTo(b.x + 60 - k * 22, top - 20); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+  // ground
+  ctx.fillStyle = '#03050C'; ctx.fillRect(-100, BASE, W + 400, H - BASE);
+  ctx.fillStyle = CY; ctx.globalAlpha = .8; ctx.fillRect(-100, BASE, W + 400, 2); ctx.globalAlpha = 1;
+  // scan light
+  const sx = ((lt * 500) % (W + 600)) - 300;
+  const sl = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
+  sl.addColorStop(0, 'rgba(0,224,255,0)'); sl.addColorStop(.5, 'rgba(0,224,255,.07)'); sl.addColorStop(1, 'rgba(0,224,255,0)');
+  ctx.fillStyle = sl; ctx.fillRect(sx - 120, 0, 240, BASE);
+
+  // pin on 都庁
+  const tb = buildings.find(b => b.kind === 'tocho');
+  const pd = seg(lt, 1.7, 2.3);
+  if (pd > 0) {
+    const px = tb.x + tb.w / 2, py = BASE - tb.h - 70 - (1 - eOutBack(pd)) * 200;
+    for (let k = 0; k < 3; k++) {
+      const q = ((lt - 2.2) * .7 + k / 3) % 1;
+      if (lt > 2.2) { ctx.save(); ctx.strokeStyle = `rgba(0,224,255,${(1 - q) * .8})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(px, py + 64, 20 + q * 110, (20 + q * 110) * .3, 0, 0, 7); ctx.stroke(); ctx.restore(); }
+    }
+    ctx.save(); ctx.globalAlpha = clamp(pd * 3);
+    ctx.fillStyle = CY; ctx.shadowColor = CY; ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.moveTo(px, py + 60); ctx.bezierCurveTo(px - 10, py + 30, px - 34, py + 16, px - 34, py - 8);
+    ctx.arc(px, py - 8, 34, Math.PI, 0); ctx.bezierCurveTo(px + 34, py + 16, px + 10, py + 30, px, py + 60); ctx.fill();
+    ctx.shadowBlur = 0; ctx.fillStyle = BG; ctx.beginPath(); ctx.arc(px, py - 8, 13, 0, 7); ctx.fill();
+    ctx.restore();
+    txt('THIRD Inc.', px + 52, py - 18, { size: 26, weight: 700, family: EN, color: '#fff', ls: 4, alpha: seg(lt, 2.3, 2.7) });
+    txt('HEAD OFFICE', px + 52, py + 12, { size: 16, weight: 500, family: EN, color: CY, ls: 5, alpha: seg(lt, 2.4, 2.8) });
+  }
+  ctx.restore();
+
+  // text
+  const x0 = 160;
+  ctx.fillStyle = CY; ctx.fillRect(x0, 186, 56 * eOutExpo(seg(lt, .3, .9)), 3);
+  txt('OUR OFFICE', x0 + 76, 198, { size: 26, weight: 500, family: EN, color: CY, ls: 10, alpha: seg(lt, .35, .8) });
+  reveal('SHINJUKU, TOKYO', x0 - 4, 350, .5, lt, { size: 140, weight: 700, family: EN, stagger: .04, dur: .7, ls: 4 });
+  reveal('東京・新宿から、日本の営業を変えていく。', x0, 440, 1.3, lt, { size: 44, weight: 700, stagger: .03, dur: .5 });
+  const coord = '35.6938° N  /  139.7034° E';
+  const n = Math.floor(seg(lt, 2.2, 3.2) * coord.length);
+  txt(coord.slice(0, n) + (n < coord.length && lt > 2.2 && Math.floor(lt * 6) % 2 ? '_' : ''), x0, 500, { size: 26, weight: 300, family: EN, color: GR, ls: 6 });
+
+  const o = seg(lt, 5.5, 6.0);
+  if (o > 0) { ctx.fillStyle = `rgba(0,0,0,${eInCubic(o)})`; ctx.fillRect(0, 0, W, H); }
+  return { glitch: lt < .12 ? .5 : 0 };
+}
+
+// ============================================================
+// SCENE 8  36-45s  代行。育成。戦略。 → LOGO
+// ============================================================
+function s8(t) {
+  const lt = t - 36;
+  if (lt < 1.5) {
+    const k = Math.floor(lt / .5), kt = lt - k * .5;
+    const words = ['代行。', '育成。', '戦略。'];
+    const bgc = ['#000', CY, '#fff'][k], fg = ['#fff', '#000', '#000'][k];
+    ctx.fillStyle = bgc; ctx.fillRect(0, 0, W, H);
+    const sc = lerp(1.18, 1, eOutExpo(seg(kt, 0, .3)));
+    ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(sc, sc);
+    ctx.font = font(900, 330, JP); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = fg;
+    ctx.fillText(words[k], 0, 0);
+    ctx.restore();
+    txt(['SALES OUTSOURCING', 'TRAINING', 'MARKETING'][k], W / 2, H / 2 + 250, { size: 30, weight: 500, family: EN, color: fg, align: 'center', ls: 18, alpha: .7 });
+    return { glitch: kt < .07 ? .5 : 0 };
+  }
+  bg(t, { grid: .4 * seg(lt, 2, 3), glow: seg(lt, 1.9, 3), pa: seg(lt, 2, 3) });
+  if (lt < 2) {
+    // energy gathering line
+    const p = eInCubic(seg(lt, 1.5, 2.0));
+    const w = lerp(W, 0, p);
+    ctx.save(); ctx.fillStyle = CY; ctx.shadowColor = CY; ctx.shadowBlur = 30;
+    ctx.fillRect(W / 2 - w / 2, H / 2 - 1, w, 3);
+    glowDot(W / 2, H / 2, 6 + p * 14, p);
+    ctx.restore();
+    return {};
+  }
+  const l = lt - 2;
+  // logo mark (3 rising bars) + wordmark
+  const wmSize = 190, wmLs = 34;
+  const wmW = measure('THIRD', wmSize, 700, EN, wmLs);
+  const markW = 3 * 38 + 2 * 18, gapM = 56;
+  const totalW = markW + gapM + wmW;
+  const X = W / 2 - totalW / 2, Y = 470;
+  const heights = [80, 120, 160];
+  lctx.setTransform(1, 0, 0, 1, 0, 0);
+  lctx.clearRect(0, 0, W, 400);
+  const OY = 300; // baseline inside logoCv
+  heights.forEach((hh, i) => {
+    const p = eOutExpo(seg(l, i * .12, .6 + i * .12));
+    const bx = X + i * 56, h2 = hh * p, sk = 30;
+    const g = lctx.createLinearGradient(0, OY - 160, 0, OY);
+    g.addColorStop(0, CY); g.addColorStop(1, BL);
+    lctx.fillStyle = g;
+    lctx.beginPath(); lctx.moveTo(bx, OY); lctx.lineTo(bx + 38, OY); lctx.lineTo(bx + 38 + sk * p * hh / 160, OY - h2); lctx.lineTo(bx + sk * p * hh / 160, OY - h2); lctx.closePath(); lctx.fill();
+  });
+  // wordmark with mask
+  const mp = eInOut(seg(l, .3, 1.1));
+  lctx.save();
+  lctx.beginPath(); lctx.rect(X + markW + gapM - 10, 0, (wmW + 60) * mp, 400); lctx.clip();
+  lctx.font = font(700, wmSize, EN); lctx.letterSpacing = wmLs + 'px'; lctx.fillStyle = '#fff'; lctx.textBaseline = 'alphabetic';
+  lctx.fillText('THIRD', X + markW + gapM, OY);
+  lctx.restore();
+  // light sweep
+  const sw = seg(l, 3.0, 3.9);
+  if (sw > 0 && sw < 1) {
+    lctx.save(); lctx.globalCompositeOperation = 'source-atop';
+    const sx = lerp(X - 300, X + totalW + 300, eInOut(sw));
+    const g = lctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    lctx.fillStyle = g; lctx.transform(1, 0, -.35, 1, 0, 0); lctx.fillRect(sx - 120 + 100, 0, 240, 400);
+    lctx.restore();
+  }
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,224,255,.35)'; ctx.shadowBlur = 40;
+  const lsc = 1 + .02 * l;
+  ctx.translate(W / 2, Y); ctx.scale(lsc, lsc); ctx.translate(-W / 2, -Y);
+  ctx.drawImage(logoCv, 0, Y - OY);
+  ctx.restore();
+  // cursor line of mask
+  if (mp > 0 && mp < 1) { ctx.fillStyle = CY; ctx.fillRect(X + markW + gapM - 10 + (wmW + 60) * mp, Y - 170, 3, 200); }
+
+  txt('株式会社サード', W / 2, 590, { size: 46, weight: 700, color: '#fff', align: 'center', ls: 22, alpha: seg(l, 1.1, 1.7) });
+  const dl = eOutExpo(seg(l, 1.4, 2.2));
+  ctx.fillStyle = grad(W / 2 - 300, 0, W / 2 + 300, 0, BL, CY); ctx.fillRect(W / 2 - 300 * dl, 640, 600 * dl, 2);
+  reveal('売れる組織を、共に創る。', W / 2, 740, 1.9, l, { size: 54, weight: 900, align: 'center', stagger: .05, dur: .6, color: grad(W / 2 - 330, 0, W / 2 + 330, 0, '#ffffff', '#9eefff') });
+  txt('営業代行　｜　営業マン育成コンサルティング　｜　マーケティングコンサルティング', W / 2, 880, { size: 24, weight: 500, color: '#b9c1d0', align: 'center', ls: 3, alpha: seg(l, 2.8, 3.4) });
+  txt('SHINJUKU, TOKYO', W / 2, 930, { size: 20, weight: 300, family: EN, color: GR, align: 'center', ls: 12, alpha: seg(l, 3.0, 3.6) });
+
+  const o = seg(lt, 8.0, 8.9);
+  if (o > 0) { ctx.fillStyle = `rgba(0,0,0,${eInOut(o)})`; ctx.fillRect(0, 0, W, H); }
+  return { flash: l < .3 ? (1 - l / .3) : 0 };
+}
+
+// ============================================================
+function renderFrame(t) {
+  reset();
+  let fx;
+  if (t < 4) fx = s1(t);
+  else if (t < 7) fx = s2(t);
+  else if (t < 12) fx = s3(t);
+  else if (t < 30) fx = service(t);
+  else if (t < 36) fx = s7(t);
+  else fx = s8(t);
+  reset();
+  fx = fx || {};
+  hud(t, seg(t, 4.2, 5.0) * (1 - seg(t, 35.3, 35.8)));
+  if (fx.glitch) glitch(fx.glitch, Math.floor(t * FPS));
+  post(t);
+  if (fx.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${fx.flash})`; ctx.fillRect(0, 0, W, H); }
+}
+
+// ---------- boot ----------
+const ALL_TEXT = `営業は、才能じゃない。仕組みだ。自社で抱えるか。外に丸投げするか。その先にある、第三の答え。営業に、第三の答えを。
+営業代行営業マン育成コンサルティングマーケティング売れる仕組みを、現場ごと届ける。個の力を、組織の武器に。選ばれる理由を、設計する。
+戦略設計から商談・クロージングまで、一気通貫で。再現性のある育成で、自走する営業組織へ。市場分析から集客導線まで、データで描く。
+アプローチ商談成約ヒアリング提案力行動量マインド認知興味・関心比較・検討東京・新宿から、日本の営業を変えていく。代行。育成。戦略。株式会社サード売れる組織を、共に創る。｜`;
+const EN_TEXT = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,'/:°—_- ";
+async function boot() {
+  const loads = [];
+  for (const w of [300, 500, 700, 900]) loads.push(document.fonts.load(font(w, 40, JP), ALL_TEXT + EN_TEXT));
+  for (const w of [300, 500, 700]) loads.push(document.fonts.load(font(w, 40, EN), EN_TEXT));
+  await Promise.all(loads);
+  await document.fonts.ready;
+  renderFrame(0);
+  window.__ready = true;
+  const params = new URLSearchParams(location.search);
+  if (params.has('render')) return;
+  document.body.classList.add('preview');
+  const t0q = parseFloat(params.get('t') || '0');
+  let start = null, playing = false, audio = null;
+  const tick = now => {
+    if (start === null) start = now - t0q * 1000;
+    const t = ((now - start) / 1000) % DUR;
+    renderFrame(t);
+    requestAnimationFrame(tick);
+  };
+  if (params.has('still')) { renderFrame(t0q); return; }
+  document.body.addEventListener('click', () => {
+    if (playing) return; playing = true;
+    audio = new Audio('music.wav'); audio.loop = true; audio.play().catch(() => {});
+    start = null;
+  });
+  requestAnimationFrame(tick);
+}
+boot();
+</script>
+</body>
+</html>
