@@ -537,11 +537,12 @@ function sFlow(lt, t) {
     ctx.fillStyle = CY; ctx.fillRect(px, py, 4, ph);
     ctx.restore();
     const isLoop = lt >= LOOP;
-    const kt = isLoop ? LOOP : A[cur];
+    const si = Math.max(0, cur);
+    const kt = isLoop ? LOOP : A[si];
     const e = eOutExpo(seg(lt, kt, kt + .45));
-    const big = isLoop ? '∞' : String(cur + 1).padStart(2, '0');
-    const title = isLoop ? '成約率が上がるまで、回し続ける。' : STEPS[cur].jp;
-    const desc = isLoop ? '定期的な振り返りで、トークと提案を磨き続けます。' : STEPS[cur].d;
+    const big = isLoop ? '∞' : String(si + 1).padStart(2, '0');
+    const title = isLoop ? '成約率が上がるまで、回し続ける。' : STEPS[si].jp;
+    const desc = isLoop ? '定期的な振り返りで、トークと提案を磨き続けます。' : STEPS[si].d;
     ctx.save(); ctx.globalAlpha *= pa * e; ctx.translate((1 - e) * 40, 0);
     txt(big, px + 60, py + 128, { size: 110, weight: 700, family: EN, color: grad(px, 0, px + 160, 0, '#ffffff', CY) });
     txt(title, px + 260, py + 78, { size: 46, weight: 900 });
