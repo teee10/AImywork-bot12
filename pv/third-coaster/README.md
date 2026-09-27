@@ -41,6 +41,8 @@ python3 music.py                 # music.wav
 python3 subset_fonts.py          # テキストを変更したとき（元TTFは ../third/fonts/src/）
 for r in "0 18" "18 36" "36 54" "54 72"; do node render.cjs --seg $r & done; wait   # 1フレーム約1秒
 node render.cjs --join           # -> third_coaster_pv.mp4
+# 動きが激しく CRF 19 だと約140MB になるため、GitHub の100MB制限に収まるよう 8Mbps に再エンコード
+mv third_coaster_pv.mp4 master.mp4 && $FFMPEG -i master.mp4 -c:v libx264 -preset slow -b:v 8M -maxrate 10M -bufsize 16M -pix_fmt yuv420p -c:a copy -movflags +faststart third_coaster_pv.mp4
 node render.cjs --still 40.5     # 静止画確認 -> stills/
 ```
 
