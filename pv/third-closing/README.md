@@ -31,9 +31,10 @@
 pip install numpy imageio-ffmpeg fonttools brotli
 python3 music.py
 python3 subset_fonts.py        # テキストを変更したとき（元TTFは ../third/fonts/src/）
-FFMPEG=$(python3 -c "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())") \
-  NODE_PATH=$(npm root -g) node render.cjs                 # -> third_closing_pv.mp4
-NODE_PATH=$(npm root -g) node render.cjs --still 40.5      # 静止画確認 -> stills/
+export FFMPEG=$(python3 -c "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())") NODE_PATH=$(npm root -g)
+for r in "0 30" "30 60" "60 90" "90 120"; do node render.cjs --seg $r; done   # 30秒ずつ映像を書き出し
+node render.cjs --join                                        # 連結＋BGM合成 -> third_closing_pv.mp4
+node render.cjs --still 40.5      # 静止画確認 -> stills/
 ```
 
 ロゴ・コピー・レポート画面（「※イメージ」表記）は仮のものです。実績の数値や顧客名は入れていません。
