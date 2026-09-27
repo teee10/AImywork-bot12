@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>株式会社サード PV ジェットコースター版</title>
+<style>
+  @font-face { font-family: "Noto Sans JP"; font-weight: 300; src: url(fonts/NotoSansJP-300.woff2) format("woff2"); }
+  @font-face { font-family: "Noto Sans JP"; font-weight: 500; src: url(fonts/NotoSansJP-500.woff2) format("woff2"); }
+  @font-face { font-family: "Noto Sans JP"; font-weight: 700; src: url(fonts/NotoSansJP-700.woff2) format("woff2"); }
+  @font-face { font-family: "Noto Sans JP"; font-weight: 900; src: url(fonts/NotoSansJP-900.woff2) format("woff2"); }
+  @font-face { font-family: "Oswald"; font-weight: 300; src: url(../third/fonts/Oswald-300.ttf) format("truetype"); }
+  @font-face { font-family: "Oswald"; font-weight: 500; src: url(../third/fonts/Oswald-500.ttf) format("truetype"); }
+  @font-face { font-family: "Oswald"; font-weight: 700; src: url(../third/fonts/Oswald-700.ttf) format("truetype"); }
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; }
+  #stage canvas { position: absolute; left: 0; top: 0; display: block; }
+  body.preview #stage { transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="gl"></canvas><canvas id="c"></canvas></div>
+<script src="vendor/three-bundle.js"></script>
+<script src="engine.js"></script>
+<script>
+// world.js / overlay.js はフォント読み込み後に読み込む（看板テクスチャに文字を描くため）
+function loadScript(src) { return new Promise((ok, ng) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ng; document.body.appendChild(s); }); }
+function renderFrame(t) {
+  const info = worldFrame(t);
+  const fx = overlayFrame(t, info);
+  if (fx.glitch) glitch(fx.glitch, Math.floor(t * FPS));
+  return info;
+}
+async function boot() {
+  const loads = [];
+  for (const w of [300, 500, 700, 900]) loads.push(document.fonts.load(font(w, 40, JP), 'あA'));
+  for (const w of [300, 500, 700]) loads.push(document.fonts.load(font(w, 40, EN), 'A'));
+  await Promise.all(loads);
+  await document.fonts.ready;
+  await loadScript('world.js');
+  await loadScript('overlay.js');
+  renderFrame(0);
+  window.__ready = true;
+  const params = new URLSearchParams(location.search);
+  if (params.has('render')) return;
+  document.body.classList.add('preview');
+  const fit = () => { const k = Math.min(innerWidth / 1920, innerHeight / 1080); document.getElementById('stage').style.transform = `scale(${k})`; };
+  fit(); addEventListener('resize', fit);
+  const t0q = parseFloat(params.get('t') || '0');
+  let start = null, playing = false;
+  const tick = now => {
+    if (start === null) start = now - t0q * 1000;
+    renderFrame(((now - start) / 1000) % DUR);
+    requestAnimationFrame(tick);
+  };
+  document.body.addEventListener('click', () => {
+    if (playing) return; playing = true;
+    const audio = new Audio('music.wav'); audio.loop = true; audio.currentTime = t0q; audio.play().catch(() => {});
+    start = null;
+  });
+  requestAnimationFrame(tick);
+}
+boot();
+</script>
+</body>
+</html>
