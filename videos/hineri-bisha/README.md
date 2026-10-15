@@ -6,7 +6,8 @@
 | `hineri_bisha_jissen.mp4` | **実戦編**（約8分）目標の形・序盤の落とし穴2つ・角交換の注意・実戦1局（99手で詰みまで） |
 | `hineri_bisha_kougeki.mp4` | **よく出る攻めパターン**（約4分半）ひねったあとの局面からソフト同士で24局を指させ、先手の攻めの手を集計。出現数の多い順に解説（銀の繰り出し・角の転換・▲8六飛・▲7四歩の突き捨てなど） |
 | `hineri_bisha_sonota.mp4` | **よく出る攻めパターン2**（約4分）前回「そのほか」にまとめた5つ（▲5六歩〜▲5五歩・8筋の歩・と金・桂跳ね・端攻め）の解説 |
-| `make_video.py` / `make_jissen.py` / `make_kougeki.py` / `make_sonota.py` | 各動画の台本と生成スクリプト |
+| `shuban_nyumon.mp4` | **終盤力 入門**（約6分半）終盤の言葉・1手詰（頭金・桂）・3手詰（下段に落とす・捨て駒・端玉）・詰めろと必至・速度計算・受けの基本・練習法。詰将棋は自作の詰み探索で正解が1つだけであることを確認 |
+| `make_video.py` / `make_jissen.py` / `make_kougeki.py` / `make_sonota.py` / `make_shuban.py` | 各動画の台本と生成スクリプト |
 | `shogi_video.py` | 共通部品（盤面描画・読み上げ・動画の組み立て） |
 
 ## 手順の検証について
@@ -23,4 +24,5 @@ python3 videos/hineri-bisha/make_video.py
 python3 videos/hineri-bisha/make_jissen.py
 python3 videos/hineri-bisha/make_kougeki.py
 python3 videos/hineri-bisha/make_sonota.py
+python3 videos/hineri-bisha/make_shuban.py
 ```

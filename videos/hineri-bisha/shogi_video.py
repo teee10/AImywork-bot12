@@ -49,7 +49,8 @@ def draw_piece(img, x, y, kanji, gote, promoted=False):
 
 def hand_text(board, color):
     c = board.pieces_in_hand[color]
-    out = "".join(KANJI[pt] + (NUM[c[pt]] if c[pt] > 1 else "") for pt in [7, 6, 5, 4, 3, 2, 1] if c[pt])
+    zen = lambda n: "".join(NUM[int(ch)] for ch in str(n))
+    out = "".join(KANJI[pt] + (zen(c[pt]) if c[pt] > 1 else "") for pt in [7, 6, 5, 4, 3, 2, 1] if c[pt])
     return out or "なし"
 
 def arrow(d, a, b, col=(235, 40, 40)):
@@ -61,7 +62,7 @@ def arrow(d, a, b, col=(235, 40, 40)):
     d.line([x1, y1, *(base + v * 2)], fill=col, width=8)
     d.polygon([tuple(tip), tuple(base + n * 15), tuple(base - n * 15)], fill=col)
 
-def render(board, chapter, title, caption, hl=(), arrows=(), marks=(), last=None, sub=None, ply=None, ev=None):
+def render(board, chapter, title, caption, hl=(), arrows=(), marks=(), last=None, sub=None, ply=None, ev=None, ghand=None):
     img = Image.new("RGBA", (W, H), (34, 40, 52, 255))
     d = ImageDraw.Draw(img)
     d.rectangle([BX - 14, BY - 14, BX + BOARD_PX + 14, BY + BOARD_PX + 14], fill=(205, 160, 90))
@@ -95,7 +96,7 @@ def render(board, chapter, title, caption, hl=(), arrows=(), marks=(), last=None
     # 持ち駒
     fh = font(22)
     d.text((BX, BY + BOARD_PX + 20), "▲先手 持駒: " + hand_text(board, shogi.BLACK), font=fh, fill=(255, 255, 255))
-    d.text((PX, H - 44), "△後手 持駒: " + hand_text(board, shogi.WHITE), font=fh, fill=(200, 200, 200))
+    d.text((PX, H - 44), "△後手 持駒: " + (ghand or hand_text(board, shogi.WHITE)), font=fh, fill=(200, 200, 200))
     if ply:
         d.text((BX + BOARD_PX - 110, BY + BOARD_PX + 20), f"{ply}手目", font=fh, fill=(255, 220, 120))
     if ev is not None:
@@ -143,7 +144,7 @@ PIECE = {"歩": "ふ", "香": "きょう", "桂": "けい", "銀": "ぎん", "�
 WORDS = [("ひねり飛車", "ひねりびしゃ"), ("浮き飛車", "うきびしゃ"), ("引き飛車", "ひきびしゃ"), ("居飛車", "いびしゃ"),
          ("振り飛車", "ふりびしゃ"), ("王手飛車", "おうてびしゃ"), ("相掛かり", "あいがかり"), ("悪形", "あくけい"),
          ("角頭", "かくとう"), ("位を取", "くらいを取"), ("垂れ歩", "たれふ"), ("継ぎ歩", "つぎふ"),
-         ("３手詰", "さんてづめ"), ("銀冠", "ぎんかんむり"), ("勝勢", "しょうせい"), ("駒得", "こまどく"), ("５手詰", "ごてづめ"), ("▲", ""), ("△", ""), ("〜", "から")]
+         ("３手詰", "さんてづめ"), ("銀冠", "ぎんかんむり"), ("一手すき", "いってすき"), ("端玉", "はしぎょく"), ("成桂", "なりけい"), ("中段玉", "ちゅうだんぎょく"), ("勝勢", "しょうせい"), ("駒得", "こまどく"), ("５手詰", "ごてづめ"), ("▲", ""), ("△", ""), ("〜", "から")]
 
 def yomi(text):
     for a, b in WORDS:
@@ -172,12 +173,16 @@ def build(scenes, out, work):
     board = shogi.Board()
     history = []
     segs = []
+    noply = False
+    cur_ghand = None
     for i, sc in enumerate(scenes):
         if "card" in sc:
             img = sc["card"]
         else:
+            if "sfen" in sc:    # 詰将棋などの任意局面
+                board = shogi.Board(sc["sfen"]); history = []; noply = True; cur_ghand = sc.get("ghand")
             if "start" in sc:   # 初期局面から指定手順を並べた局面にする
-                board = shogi.Board(); history = []
+                board = shogi.Board(); history = []; noply = False; cur_ghand = None
                 for usi in sc["start"]:
                     m = shogi.Move.from_usi(usi)
                     assert m in board.legal_moves, f"scene {i}: illegal start move {usi}"
@@ -195,7 +200,7 @@ def build(scenes, out, work):
                 last = shogi.SQUARE_NAMES[m.to_square]
             img = render(board, sc["chapter"], sc["title"], sc["caption"], hl=sc.get("hl", ()),
                          arrows=sc.get("arrows", ()), marks=sc.get("marks", ()), last=last, sub=sc.get("sub"),
-                         ply=len(history) or None, ev=sc.get("ev"))
+                         ply=None if noply else (len(history) or None), ev=sc.get("ev"), ghand=sc.get("ghand", cur_ghand))
         ip, ap, vp = (os.path.join(work, f"s{i:02d}.{e}") for e in ("png", "wav", "mp4"))
         img.save(ip); tts(sc["narr"], ap)
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", "30", "-i", ip, "-i", ap,
