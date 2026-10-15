@@ -1,3 +1,2 @@
-_build/
-_build_jissen/
+_build*/
 __pycache__/

@@ -102,7 +102,8 @@ def render(board, chapter, title, caption, hl=(), arrows=(), marks=(), last=None
         lab = "互角" if abs(ev) < 200 else ("先手有利" if ev > 0 else "後手有利")
         if abs(ev) >= 1000:
             lab = "先手勝勢" if ev > 0 else "後手勝勢"
-        d.text((BX, BY + BOARD_PX + 46), f"評価値 {ev:+d}（{lab}）", font=fh,
+        txt = f"評価値 {ev:+d}（{lab}）" if abs(ev) < 30000 else ("先手の勝ち（詰みあり）" if ev > 0 else "後手の勝ち（詰みあり）")
+        d.text((BX, BY + BOARD_PX + 46), txt, font=fh,
                fill=(140, 220, 255) if ev >= 0 else (255, 150, 150))
     # 右パネル
     d.text((PX, 20), chapter, font=font(24), fill=(255, 210, 110))
